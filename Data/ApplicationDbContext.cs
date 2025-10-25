@@ -29,13 +29,6 @@ namespace Data
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<UserDto>(b =>
-            {
-                b.Property(u => u.Email).IsRequired();
-                b.HasIndex(u => u.Email).IsUnique();
-            });
-
-
             modelBuilder.Entity<Customer>(entity =>
             {
                 entity.HasKey(e => e.CustomerId);
