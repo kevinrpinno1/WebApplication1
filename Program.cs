@@ -1,4 +1,6 @@
 using Data;
+using Data.Seed;
+using FluentValidation;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
@@ -6,12 +8,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using WebApplication1.Configuration;
-using Data.Seed;
 using WebApplication1.Services;
-using System.Security.Claims;
+using WebApplication1.Validators;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -32,6 +34,12 @@ builder.Services.AddSingleton(constants);
 // --------------------------------------------------------------------
 
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddValidatorsFromAssemblyContaining<CustomerValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<ProductInterfaceValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderItemDtoValidator>();
+
+
 
 // --------------------------------------------------------------------
 // Db Context and Identity setup

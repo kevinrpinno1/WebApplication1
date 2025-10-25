@@ -1,6 +1,6 @@
 ﻿namespace WebApplication1.DTOs
 {
-    public class CreateCustomerDto : ICustomerDto
+    public class UpdateCustomerDto : ICustomerDto
     {
         public string Name { get; set; } = string.Empty;
         public string? Address { get; set; }
