@@ -10,6 +10,8 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using WebApplication1.Configuration;
 using Data.Seed;
+using WebApplication1.Services;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -29,6 +31,8 @@ builder.Configuration.GetSection("Constants").Bind(constants);
 builder.Services.AddSingleton(constants);
 // --------------------------------------------------------------------
 
+builder.Services.AddScoped<ITokenService, TokenService>();
+
 // --------------------------------------------------------------------
 // Db Context and Identity setup
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -39,11 +43,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddIdentityCore<IdentityUser>(options =>
 {
     // password settings
-    options.Password.RequireDigit = true; // just a digit needed to demo a validation error
-    //options.Password.RequireLowercase = true;
-    //options.Password.RequireUppercase = true;
-    //options.Password.RequireNonAlphanumeric = false;
-    //options.Password.RequiredLength = 6;
+    options.Password.RequireDigit = true; 
+    options.Password.RequireLowercase = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
 
     // user settings
     options.User.RequireUniqueEmail = true;
@@ -77,7 +81,8 @@ builder.Services.AddAuthentication(k=>
         ValidateIssuerSigningKey = true,
         ValidIssuer = jwtSettings.Issuer,
         ValidAudience = jwtSettings.Audience,
-        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSettings.Key))
+        IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(jwtSettings.Key)),
+        RoleClaimType = ClaimTypes.Role 
     };
 });
 
@@ -103,7 +108,7 @@ builder.Services.AddSwaggerGen();
 // health checks added and mapped below - not fully required in this scenario 
 // but useful for future deployment (and is a typical setup addition for me)
 builder.Services.AddHealthChecks()
-                .AddDbContextCheck<ApplicationDbContext>(tags: new[] { "ready" }) // checks database connectivity
+                .AddDbContextCheck<ApplicationDbContext>(tags: ["ready"]) // checks database connectivity
                 .AddCheck("self", () => HealthCheckResult.Healthy());
 
 var app = builder.Build();
@@ -155,7 +160,7 @@ if (app.Environment.IsDevelopment())
         try
         {
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-            dbContext.Database.Migrate();
+            await dbContext.Database.MigrateAsync();
 
             var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
@@ -170,4 +175,4 @@ if (app.Environment.IsDevelopment())
     }
 }
 
-app.Run();
+await app.RunAsync();

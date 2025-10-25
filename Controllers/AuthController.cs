@@ -7,6 +7,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using WebApplication1.Configuration;
 using WebApplication1.DTOs;
+using WebApplication1.Services;
 
 namespace WebApplication1.Controllers
 {
@@ -16,19 +17,20 @@ namespace WebApplication1.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
-        private readonly JwtSettings _jwtSettings;
+        private readonly ITokenService _tokenService; 
 
-        public AuthController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, JwtSettings jwtSettings)
+        public AuthController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ITokenService tokenService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
-            _jwtSettings = jwtSettings;
+            _tokenService = tokenService;
         }
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] UserDto userDto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid) 
+                return BadRequest(ModelState);
 
             var user = new IdentityUser { UserName = userDto.Email, Email = userDto.Email };
 
@@ -36,7 +38,7 @@ namespace WebApplication1.Controllers
 
             if (result.Succeeded)
             {
-                await _userManager.AddToRoleAsync(user, "User"); // assigning a default user role here
+                await _userManager.AddToRoleAsync(user, RoleConstants.User); // assigning a default user role here
                 return Ok(new { Message = "User registered successfully." });
             }
             foreach (var error in result.Errors)
@@ -45,84 +47,51 @@ namespace WebApplication1.Controllers
             }
 
             return BadRequest(ModelState);
-            //return BadRequest(new { Errors = result.Errors.Select(e => e.Description) });
         }
 
         [HttpGet("token")]
         [AllowAnonymous]
         public async Task<IActionResult> AnonLoginUser()
-        { 
-            try
-            {
-                var users = await _userManager.Users.ToListAsync();
-                if (!users.Any()) return NotFound(new { Message = "No demo users found in the database." });
+        {
+            var users = await _userManager.Users.ToListAsync();
+            if (!users.Any()) 
+                return NotFound(new { Message = "No demo users found in the database." });
 
-                var random = new Random();
-                var randomUser = users[random.Next(users.Count)];
+            var randomUser = users[Random.Shared.Next(users.Count)];
 
-                var token = await GenerateJwtToken(randomUser);
-                return Ok(new { access_token = token, User = randomUser.Email});
-            }
-            catch (Exception ex)
-            {
-                return Unauthorized(new { Message = "Failed to get Token" });
-            }
+            return await GenerateTokenResponse(randomUser);
         }
 
         [HttpPost("login")]
         [AllowAnonymous]
         public async Task<IActionResult> LoginUser([FromBody] UserDto userDto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (!ModelState.IsValid) 
+                return BadRequest(ModelState);
 
-            var user = await _userManager.FindByEmailAsync(userDto.Email);
-            if (user == null) return Unauthorized(new { Message = "Invalid credentials." });
+            var user = await _userManager.FindByEmailAsync(userDto.Email!);
 
-            var result = await _signInManager.CheckPasswordSignInAsync(user, userDto.Password, lockoutOnFailure: true);
-
-            if (result.Succeeded)
+            if (user != null)
             {
-                var token = await GenerateJwtToken(user);
+                var result = await _signInManager.CheckPasswordSignInAsync(user, userDto.Password, lockoutOnFailure: true);
 
-                return Ok(new { access_token = token, User = user.Email });
+                if (result.Succeeded)
+                    return await GenerateTokenResponse(user);
+
+                if (result.IsLockedOut)
+                    return Unauthorized(new { Message = "User account locked out." });
             }
 
-            if (result.IsLockedOut) return Unauthorized(new { Message = "User account locked out." });
-
-            return Unauthorized(new { Message = "Invalid credentials" });
+            return Unauthorized(new { Message = "Invalid credentials." });
 
         }
 
-        // could be moved to a service for better separation of concerns
-        public async Task<string> GenerateJwtToken(IdentityUser user)
+        private async Task<IActionResult> GenerateTokenResponse(IdentityUser user)
         {
-            var roles = await _userManager.GetRolesAsync(user);
-            var claims = new List<Claim>
-            {
-                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Email, user.Email)                
-            };
-
-           // if roles needed
-            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
-
-            var signingKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_jwtSettings.Key));
-            var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
-
-            var tokenDescriptor = new SecurityTokenDescriptor
-            {
-                Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpiryMinutes),
-                Issuer = _jwtSettings.Issuer,
-                Audience = _jwtSettings.Audience,
-                SigningCredentials = credentials
-            };
-
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-
-            return tokenHandler.WriteToken(token);
+            var token = await _tokenService.GenerateJwtToken(user);
+            if(string.IsNullOrEmpty(token)) 
+                return Unauthorized(new { Message = "Failed to generate token." });
+            return Ok(new { access_token = token, User = user.Email });
         }
     }
 }

@@ -25,18 +25,11 @@ namespace Data
         //      Delete behaviours are set appropriately for the entity relationships
         //          Cascade delete for Customer -> Orders and Order -> OrderItems
         //          Restrict delete for OrderItem -> Product to prevent deletion of products
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder builder)
         {
-            base.OnModelCreating(modelBuilder);
+            base.OnModelCreating(builder);
 
-            modelBuilder.Entity<UserDto>(b =>
-            {
-                b.Property(u => u.Email).IsRequired();
-                b.HasIndex(u => u.Email).IsUnique();
-            });
-
-
-            modelBuilder.Entity<Customer>(entity =>
+            builder.Entity<Customer>(entity =>
             {
                 entity.HasKey(e => e.CustomerId);
                 entity.Property(e => e.CustomerId)
@@ -50,7 +43,7 @@ namespace Data
                       .HasMaxLength(50);
             });
 
-            modelBuilder.Entity<Product>(entity => {
+            builder.Entity<Product>(entity => {
                 entity.HasKey(e => e.ProductId);
                 entity.Property(e => e.ProductId)
                       .UseIdentityColumn();
@@ -61,7 +54,7 @@ namespace Data
                       .HasColumnType("decimal(18,2)");
             });
 
-            modelBuilder.Entity<Order>(entity =>
+            builder.Entity<Order>(entity =>
             {
                 entity.HasKey(e => e.OrderId);
                 entity.Property(e => e.OrderId)
@@ -74,7 +67,7 @@ namespace Data
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            modelBuilder.Entity<OrderItem>(entity => {
+            builder.Entity<OrderItem>(entity => {
                 entity.HasKey(e => e.OrderItemId);
                 entity.Property(e => e.OrderItemId)
                       .HasDefaultValueSql("NEWID()");

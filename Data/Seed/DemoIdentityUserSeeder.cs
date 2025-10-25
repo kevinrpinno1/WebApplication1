@@ -48,11 +48,13 @@ namespace Data.Seed
         {
             foreach (var email in emails)
             {
-                if (await userManager.FindByEmailAsync(email) == null) // does the user exist already?
+                var user = await userManager.FindByEmailAsync(email);
+
+                if ( user == null) // does the user exist already?
                 {
                     // create the user if not
 
-                    var user = new IdentityUser 
+                    user = new IdentityUser 
                     {
                         UserName = email,
                         Email = email,
@@ -61,10 +63,18 @@ namespace Data.Seed
 
                     var result = await userManager.CreateAsync(user, password);
 
-                    if (result.Succeeded) await userManager.AddToRoleAsync(user, roleName); // add the user role 
+                    if (result.Succeeded) 
+                        await userManager.AddToRoleAsync(user, roleName); // add the user role 
+                }
+                else
+                {
+                    var isInRole = await userManager.IsInRoleAsync(user, roleName);
+                    if (!isInRole)
+                    {
+                        await userManager.AddToRoleAsync(user, roleName);
+                    }
                 }
             }
-
             await Task.CompletedTask;
         }
 

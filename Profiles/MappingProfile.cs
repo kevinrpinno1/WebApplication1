@@ -7,8 +7,7 @@ namespace WebApplication1.Profiles
     {
         public MappingProfile()
         {
-        //    CreateMap<Customer, CustomerDto>();
-        //    CreateMap<CreateCustomerDto, Customer>();
+
 
         }
     }
