@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -33,8 +34,11 @@ namespace WebApplication1.Controllers
 
             var result = await _userManager.CreateAsync(user, userDto.Password);
 
-            if (result.Succeeded) return Ok(new { Message = "User registered successfully." });
-
+            if (result.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(user, "User"); // assigning a default user role here
+                return Ok(new { Message = "User registered successfully." });
+            }
             foreach (var error in result.Errors)
             {
                 ModelState.AddModelError(error.Code, error.Description);
@@ -44,20 +48,20 @@ namespace WebApplication1.Controllers
             //return BadRequest(new { Errors = result.Errors.Select(e => e.Description) });
         }
 
-        [HttpGet("anon-token")]
+        [HttpGet("token")]
         [AllowAnonymous]
         public async Task<IActionResult> AnonLoginUser()
         { 
             try
             {
-                var users = _userManager.Users.ToList();
+                var users = await _userManager.Users.ToListAsync();
                 if (!users.Any()) return NotFound(new { Message = "No demo users found in the database." });
 
                 var random = new Random();
                 var randomUser = users[random.Next(users.Count)];
 
                 var token = await GenerateJwtToken(randomUser);
-                return Ok(new { Token = token, User = randomUser});
+                return Ok(new { access_token = token, User = randomUser.Email});
             }
             catch (Exception ex)
             {
@@ -65,7 +69,7 @@ namespace WebApplication1.Controllers
             }
         }
 
-        [HttpPost("token")]
+        [HttpPost("login")]
         [AllowAnonymous]
         public async Task<IActionResult> LoginUser([FromBody] UserDto userDto)
         {
@@ -80,7 +84,7 @@ namespace WebApplication1.Controllers
             {
                 var token = await GenerateJwtToken(user);
 
-                return Ok(new { Token = token });
+                return Ok(new { access_token = token, User = user.Email });
             }
 
             if (result.IsLockedOut) return Unauthorized(new { Message = "User account locked out." });
@@ -92,7 +96,7 @@ namespace WebApplication1.Controllers
         // could be moved to a service for better separation of concerns
         public async Task<string> GenerateJwtToken(IdentityUser user)
         {
-            //var roles = await _userManager.GetRolesAsync(user);
+            var roles = await _userManager.GetRolesAsync(user);
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id),
@@ -101,7 +105,7 @@ namespace WebApplication1.Controllers
             };
 
            // if roles needed
-           // claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
             var signingKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(_jwtSettings.Key));
             var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);

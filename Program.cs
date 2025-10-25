@@ -34,7 +34,7 @@ builder.Services.AddSingleton(constants);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// for a deployed application these would be set in configuration securely and not hard-coded
+// for a deployed application these could be set in configuration securely and not hard-coded in case of cybersecurity policy updates
 // for instance in GitHub Actions env secrets / variables 
 builder.Services.AddIdentityCore<IdentityUser>(options =>
 {
@@ -52,7 +52,7 @@ builder.Services.AddIdentityCore<IdentityUser>(options =>
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
     options.Lockout.MaxFailedAccessAttempts = 5;
 })
-    //.AddRoles<IdentityRole>()
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders()
     .AddSignInManager<SignInManager<IdentityUser>>();
@@ -158,7 +158,9 @@ if (app.Environment.IsDevelopment())
             dbContext.Database.Migrate();
 
             var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
-            await DemoIdentityUserSeeder.SeedDemoUsersAsync(userManager);
+            var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+
+            await DemoIdentityUserSeeder.SeedDemoUsersAsync(userManager, roleManager, constants);
         }
         catch (Exception ex)
         {

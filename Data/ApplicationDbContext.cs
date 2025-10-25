@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using WebApplication1.DTOs;
 using WebApplication1.Models;
 
 namespace Data
@@ -27,6 +28,13 @@ namespace Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<UserDto>(b =>
+            {
+                b.Property(u => u.Email).IsRequired();
+                b.HasIndex(u => u.Email).IsUnique();
+            });
+
 
             modelBuilder.Entity<Customer>(entity =>
             {
