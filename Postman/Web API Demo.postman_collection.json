@@ -1,0 +1,1611 @@
+{
+	"info": {
+		"_postman_id": "b2b78df9-3a84-4b1e-a38b-0e79eae3c647",
+		"name": "Web API Demo",
+		"description": "Postman collection for easy testing of the Demo API.\n\nWhen a token is returned from the Token or Login endpoints, it is saved to a jwt_token variable and auto added to the Customers, Products, and Order calls.\n\nbase_url variable is set to localhost:5004.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "19949813"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Get Anonymous Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();\r",
+									"pm.collectionVariables.set(\"jwt_token\", jsonData.access_token);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"Spock_4@UssEnterprise.co\",\n    \"password\": \"LiveLongAndProsper1!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();\r",
+									"pm.collectionVariables.set(\"jwt_token\", jsonData.access_token);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"Spock_4@UssEnterprise.co\",\n    \"password\": \"LiveLongAndProsper1!\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "User Registration, Login, and Token authentication endpoints.\n\nAnonymous Token endpoint is fully anonymous. It randomly grabs a user that has been pre seeded into the IdentityUsers and uses it to grab a token.\n\nRegister Users requires an email and password to be entered. The body of the request is pre populated with an email and password.\n\nLogin User requires an email and password to be entered. The body of the request is pre populated with an email and password. Can use the previously registered User to Login here. Token is retrieved upon successful login.\n\nThere is a post-req script that is run and provides a nice visualizer that decodes the JWT token that is returned.",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							"const template = `\r",
+							"<style>\r",
+							"  :root{\r",
+							"    --bg:#0b1220; --card:#121a2b; --muted:#8aa0b5; --text:#e6eef6; --accent:#5aa7ff; --ok:#2bb673; --warn:#ffb020; --bad:#ff5d5d;\r",
+							"    --border: rgba(255,255,255,.08);\r",
+							"  }\r",
+							"  *{box-sizing:border-box}\r",
+							"  body{background:var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; padding:16px}\r",
+							"  h2{margin:0 0 12px 0; font-weight:700; letter-spacing:.2px}\r",
+							"  h3{margin:0 0 10px 0; font-weight:600; letter-spacing:.2px}\r",
+							"  h4{margin:18px 0 8px 0; font-weight:600}\r",
+							"  .grid{display:grid; grid-template-columns: 1.1fr .9fr; gap:16px}\r",
+							"  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; box-shadow: 0 6px 20px rgba(0,0,0,.25)}\r",
+							"  .kv{width:100%; border-collapse:collapse}\r",
+							"  .kv th,.kv td{border-bottom:1px solid var(--border); padding:8px 10px; text-align:left; vertical-align:top; font-size:13px;}\r",
+							"  .kv th{width:220px; color:var(--muted); font-weight:500}\r",
+							"  .muted{color:var(--muted)}\r",
+							"  .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}\r",
+							"  .badge{display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid var(--border); background:rgba(255,255,255,.04)}\r",
+							"  .badge.ok{background:rgba(43,182,115,.12); border-color:rgba(43,182,115,.25); color:#bff2d7}\r",
+							"  .badge.bad{background:rgba(255,93,93,.12); border-color:rgba(255,93,93,.25); color:#ffd1d1}\r",
+							"  .badge.warn{background:rgba(255,176,32,.12); border-color:rgba(255,176,32,.25); color:#ffe5b3}\r",
+							"  .chip{display:inline-block; margin:4px 6px 0 0; padding:4px 8px; border:1px solid var(--border); border-radius:8px; font-size:12px; background:rgba(255,255,255,.04)}\r",
+							"  .mono .code, pre{background:#0a0f1a; border:1px solid var(--border); border-radius:8px; padding:10px; overflow:auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; line-height:1.45}\r",
+							"  .small{font-size:12px}\r",
+							"  .section{margin-top:10px}\r",
+							"  .header{display:flex; align-items:baseline; justify-content:space-between; gap:16px}\r",
+							"  .tokenbox{max-height:130px}\r",
+							"  @media (max-width: 980px){ .grid{grid-template-columns: 1fr; } }\r",
+							"</style>\r",
+							"\r",
+							"<div class=\"header\">\r",
+							"  <h2>JWT Inspector</h2>\r",
+							"  <div class=\"row\">\r",
+							"    {{#if times.expired}}\r",
+							"      <span class=\"badge bad\">Expired</span>\r",
+							"    {{else}}\r",
+							"      <span class=\"badge ok\">Active</span>\r",
+							"    {{/if}}\r",
+							"    {{#if times.timeToExpiryHuman}}\r",
+							"      <span class=\"badge\">{{#if times.expired}}Expired {{/if}}{{times.timeToExpiryHuman}}</span>\r",
+							"    {{/if}}\r",
+							"    {{#if standardClaims.azp}}<span class=\"badge\">azp: {{standardClaims.azp}}</span>{{/if}}\r",
+							"    {{#if header.kid}}<span class=\"badge\">kid: {{header.kid}}</span>{{/if}}\r",
+							"    {{#if header.alg}}<span class=\"badge\">alg: {{header.alg}}</span>{{/if}}\r",
+							"  </div>\r",
+							"</div>\r",
+							"\r",
+							"<div class=\"grid\">\r",
+							"  <div class=\"card\">\r",
+							"    <h3>Summary & Standard Claims</h3>\r",
+							"    <table class=\"kv\">\r",
+							"      <tr><th>Issuer (iss)</th><td>{{standardClaims.iss}}</td></tr>\r",
+							"      <tr><th>Subject (sub)</th><td>{{standardClaims.sub}}</td></tr>\r",
+							"      <tr><th>JWT ID (jti)</th><td>{{standardClaims.jti}}</td></tr>\r",
+							"      <tr><th>Audience (aud)</th>\r",
+							"        <td>\r",
+							"          {{#if arrays.aud.length}}\r",
+							"            {{#each arrays.aud}}<span class=\"chip\">{{this}}</span>{{/each}}\r",
+							"          {{else}}{{standardClaims.aud}}{{/if}}\r",
+							"        </td>\r",
+							"      </tr>\r",
+							"      <tr><th>Issued At (iat)</th><td>{{times.iatISO}} <span class=\"muted small\">({{times.iatRelative}})</span></td></tr>\r",
+							"      {{#if times.nbfISO}}<tr><th>Not Before (nbf)</th><td>{{times.nbfISO}} <span class=\"muted small\">({{times.nbfRelative}})</span></td></tr>{{/if}}\r",
+							"      {{#if times.expISO}}<tr><th>Expires (exp)</th><td>{{times.expISO}} <span class=\"muted small\">({{times.expRelative}})</span></td></tr>{{/if}}\r",
+							"    </table>\r",
+							"\r",
+							"    <div class=\"section\">\r",
+							"      <h4>Scopes</h4>\r",
+							"      {{#if arrays.scope.length}}\r",
+							"        <div class=\"row\">{{#each arrays.scope}}<span class=\"chip\">{{this}}</span>{{/each}}</div>\r",
+							"      {{else}}<div class=\"muted small\">None</div>{{/if}}\r",
+							"    </div>\r",
+							"\r",
+							"    <div class=\"section\">\r",
+							"      <h4>Roles</h4>\r",
+							"      {{#if arrays.roles.length}}\r",
+							"        <div class=\"row\">{{#each arrays.roles}}<span class=\"chip\">{{this}}</span>{{/each}}</div>\r",
+							"      {{else}}<div class=\"muted small\">None</div>{{/if}}\r",
+							"    </div>\r",
+							"\r",
+							"    <div class=\"section\">\r",
+							"      <h4>Permissions</h4>\r",
+							"      {{#if arrays.permissions.length}}\r",
+							"        <div class=\"row\">{{#each arrays.permissions}}<span class=\"chip\">{{this}}</span>{{/each}}</div>\r",
+							"      {{else}}<div class=\"muted small\">None</div>{{/if}}\r",
+							"    </div>\r",
+							"  </div>\r",
+							"\r",
+							"  <div class=\"card\">\r",
+							"    <h3>Header</h3>\r",
+							"    <pre class=\"small\">{{headerPretty}}</pre>\r",
+							"    <div class=\"section\">\r",
+							"      <h3>Custom Claims</h3>\r",
+							"      <table class=\"kv\">\r",
+							"        {{#if customClaims}}\r",
+							"          {{#each customClaims}}\r",
+							"            <tr>\r",
+							"              <th>{{@key}}</th>\r",
+							"              <td>{{this}}</td>\r",
+							"            </tr>\r",
+							"          {{/each}}\r",
+							"        {{else}}\r",
+							"          <tr><td colspan=\"2\" class=\"muted small\">No custom claims detected.</td></tr>\r",
+							"        {{/if}}\r",
+							"      </table>\r",
+							"    </div>\r",
+							"  </div>\r",
+							"\r",
+							"  <div class=\"card\" style=\"grid-column:1 / -1\">\r",
+							"    <h3>Raw Token & Payload</h3>\r",
+							"    <div class=\"mono tokenbox\"><div class=\"code\">{{tokenString}}</div></div>\r",
+							"    <div class=\"section\">\r",
+							"      <pre>{{payloadPretty}}</pre>\r",
+							"    </div>\r",
+							"  </div>\r",
+							"</div>\r",
+							"`;\r",
+							"\r",
+							"// --- Helpers ---\r",
+							"function base64UrlDecode(str) {\r",
+							"  // atob needs standard base64\r",
+							"  str = str.replace(/-/g, '+').replace(/_/g, '/');\r",
+							"  // pad\r",
+							"  while (str.length % 4) str += '=';\r",
+							"  return atob(str);\r",
+							"}\r",
+							"function parseJwt(token) {\r",
+							"  const [h, p, s] = token.split('.');\r",
+							"  const header = JSON.parse(base64UrlDecode(h));\r",
+							"  const payload = JSON.parse(base64UrlDecode(p));\r",
+							"  return { header, payload, signature: s };\r",
+							"}\r",
+							"function uniq(arr) {\r",
+							"  return Array.from(new Set(arr.filter(Boolean)));\r",
+							"}\r",
+							"function toISO(sec) {\r",
+							"  if (typeof sec !== 'number') return null;\r",
+							"  return new Date(sec * 1000).toISOString();\r",
+							"}\r",
+							"function rel(sec) {\r",
+							"  if (typeof sec !== 'number') return null;\r",
+							"  const delta = Math.round(sec - Date.now()/1000);\r",
+							"  const abs = Math.abs(delta);\r",
+							"  const units = [\r",
+							"    ['day', 86400],\r",
+							"    ['hour', 3600],\r",
+							"    ['min', 60],\r",
+							"    ['sec', 1],\r",
+							"  ];\r",
+							"  for (const [name, size] of units) {\r",
+							"    if (abs >= size) {\r",
+							"      const v = Math.round(abs/size);\r",
+							"      return delta >= 0 ? `in ${v} ${name}${v>1?'s':''}` : `${v} ${name}${v>1?'s':''} ago`;\r",
+							"    }\r",
+							"  }\r",
+							"  return delta >= 0 ? 'soon' : 'just now';\r",
+							"}\r",
+							"\r",
+							"// --- Find a token in common places ---\r",
+							"let token;\r",
+							"try {\r",
+							"  const json = pm.response.json();\r",
+							"  token = json.access_token || json.id_token || json.token || json.jwt;\r",
+							"} catch (_) {}\r",
+							"\r",
+							"if (!token) {\r",
+							"  const auth = pm.request.headers.get('Authorization');\r",
+							"  if (auth && auth.startsWith('Bearer ')) token = auth.slice(7);\r",
+							"}\r",
+							"if (!token) token = pm.variables.get('jwt'); // optional fallback\r",
+							"\r",
+							"if (!token) {\r",
+							"  pm.visualizer.set('<p style=\"font-family:system-ui\">No JWT found in response or Authorization header.</p>', {});\r",
+							"  return;\r",
+							"}\r",
+							"\r",
+							"// --- Decode & derive ---\r",
+							"const { header, payload } = parseJwt(token);\r",
+							"\r",
+							"// Arrays & nested claims\r",
+							"const audArray = Array.isArray(payload.aud) ? payload.aud : (payload.aud ? [payload.aud] : []);\r",
+							"const scopes = payload.scope\r",
+							"  ? String(payload.scope).trim().split(/\\s+/)\r",
+							"  : (Array.isArray(payload.scp) ? payload.scp : (payload.scp ? [payload.scp] : []));\r",
+							"\r",
+							"// Keycloak-style roles\r",
+							"const roleBuckets = [];\r",
+							"if (payload.realm_access && Array.isArray(payload.realm_access.roles)) {\r",
+							"  roleBuckets.push(...payload.realm_access.roles);\r",
+							"}\r",
+							"if (payload.resource_access && typeof payload.resource_access === 'object') {\r",
+							"  Object.values(payload.resource_access).forEach(svc => {\r",
+							"    if (svc && Array.isArray(svc.roles)) roleBuckets.push(...svc.roles);\r",
+							"  });\r",
+							"}\r",
+							"// Generic roles claim(s)\r",
+							"if (Array.isArray(payload.roles)) roleBuckets.push(...payload.roles);\r",
+							"if (typeof payload.role === 'string') roleBuckets.push(payload.role);\r",
+							"\r",
+							"// Permissions (some IdPs use this)\r",
+							"let permissions = [];\r",
+							"if (Array.isArray(payload.permissions)) permissions = payload.permissions;\r",
+							"\r",
+							"// Standard vs custom claims\r",
+							"const standardKeys = new Set(['iss','sub','aud','exp','nbf','iat','jti','azp','typ','auth_time','nonce']);\r",
+							"const compositeKeys = new Set(['scope','scp','realm_access','resource_access','permissions','roles','role']);\r",
+							"const customClaims = {};\r",
+							"Object.keys(payload).forEach(k => {\r",
+							"  if (!standardKeys.has(k) && !compositeKeys.has(k)) {\r",
+							"    const v = payload[k];\r",
+							"    customClaims[k] = (v && typeof v === 'object') ? JSON.stringify(v, null, 2) : String(v);\r",
+							"  }\r",
+							"});\r",
+							"\r",
+							"// Times\r",
+							"const nowSec = Math.floor(Date.now()/1000);\r",
+							"const iat = typeof payload.iat === 'number' ? payload.iat : undefined;\r",
+							"const exp = typeof payload.exp === 'number' ? payload.exp : undefined;\r",
+							"const nbf = typeof payload.nbf === 'number' ? payload.nbf : undefined;\r",
+							"\r",
+							"const times = {\r",
+							"  nowISO: new Date().toISOString(),\r",
+							"  iatISO: toISO(iat),\r",
+							"  expISO: toISO(exp),\r",
+							"  nbfISO: toISO(nbf),\r",
+							"  iatRelative: iat ? rel(iat) : null,\r",
+							"  expRelative: exp ? rel(exp) : null,\r",
+							"  nbfRelative: nbf ? rel(nbf) : null,\r",
+							"  timeToExpiryHuman: exp ? rel(exp) : null,\r",
+							"  expired: exp ? (nowSec >= exp) : false,\r",
+							"};\r",
+							"\r",
+							"const data = {\r",
+							"  tokenString: token,\r",
+							"  header,\r",
+							"  headerPretty: JSON.stringify(header, null, 2),\r",
+							"  payload,\r",
+							"  payloadPretty: JSON.stringify(payload, null, 2),\r",
+							"  standardClaims: {\r",
+							"    iss: payload.iss || '',\r",
+							"    sub: payload.sub || '',\r",
+							"    aud: Array.isArray(payload.aud) ? payload.aud.join(', ') : (payload.aud || ''),\r",
+							"    jti: payload.jti || '',\r",
+							"    azp: payload.azp || ''\r",
+							"  },\r",
+							"  customClaims,\r",
+							"  arrays: {\r",
+							"    aud: uniq(audArray),\r",
+							"    scope: uniq(scopes),\r",
+							"    roles: uniq(roleBuckets),\r",
+							"    permissions: uniq(permissions)\r",
+							"  },\r",
+							"  times\r",
+							"};\r",
+							"\r",
+							"pm.visualizer.set(template, data);\r",
+							"\r",
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Customer",
+			"item": [
+				{
+					"name": "Get All Customers",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Get All Customers - GET",
+									"pm.test(\"Status code is 200 (OK)\", function () {",
+									"    pm.expect(pm.response.code).to.eql(200);",
+									"});",
+									"",
+									"pm.test(\"Response has Content-Type: application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body is an array of customers\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an(\"array\");",
+									"});",
+									"",
+									"pm.test(\"Each customer has expected fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (Array.isArray(jsonData) && jsonData.length > 0) {",
+									"        jsonData.forEach(function(customer) {",
+									"            pm.expect(customer).to.have.property(\"customerId\");",
+									"            pm.expect(customer).to.have.property(\"name\");",
+									"            pm.expect(customer).to.have.property(\"address\");",
+									"            pm.expect(customer).to.have.property(\"phoneNumber\");",
+									"        });",
+									"    }",
+									"});",
+									"",
+									"// Error scenario: unauthorized",
+									"pm.test(\"Handles 401 Unauthorized\", function () {",
+									"    if (pm.response.code === 401) {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property(\"error\");",
+									"    }",
+									"});",
+									"",
+									"// Save the customerId of the first customer as an environment variable",
+									"var customers = pm.response.json();",
+									"if (Array.isArray(customers) && customers.length > 0 && customers[0].customerId) {",
+									"    pm.environment.set(\"customerId\", customers[0].customerId);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/customer",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"customer"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer By Id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Get Customer By Id - GET",
+									"pm.test(\"Status code is 200 (OK)\", function () {",
+									"    pm.expect(pm.response.code).to.eql(200);",
+									"});",
+									"",
+									"pm.test(\"Response has Content-Type: application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected customer fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an(\"object\");",
+									"    pm.expect(jsonData).to.have.property(\"customerId\");",
+									"    pm.expect(jsonData).to.have.property(\"name\");",
+									"    pm.expect(jsonData).to.have.property(\"address\");",
+									"    pm.expect(jsonData).to.have.property(\"phoneNumber\");",
+									"});",
+									"",
+									"// Error scenario: not found",
+									"pm.test(\"Handles 404 Not Found for missing customer\", function () {",
+									"    if (pm.response.code === 404) {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property(\"error\");",
+									"        pm.expect(jsonData.error).to.be.a(\"string\");",
+									"    }",
+									"});",
+									"",
+									"// Error scenario: unauthorized",
+									"pm.test(\"Handles 401 Unauthorized\", function () {",
+									"    if (pm.response.code === 401) {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property(\"error\");",
+									"    }",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/customer/{{customerId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"customer",
+								"{{customerId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer By Name",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Get Customer By Name - GET",
+									"pm.test(\"Status code is 200 (OK)\", function () {",
+									"    pm.expect(pm.response.code).to.eql(200);",
+									"});",
+									"",
+									"pm.test(\"Response has Content-Type: application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Response body has expected customer fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an(\"object\");",
+									"    pm.expect(jsonData).to.have.property(\"customerId\");",
+									"    pm.expect(jsonData).to.have.property(\"name\");",
+									"    pm.expect(jsonData).to.have.property(\"address\");",
+									"    pm.expect(jsonData).to.have.property(\"phoneNumber\");",
+									"});",
+									"",
+									"// Error scenario: not found",
+									"pm.test(\"Handles 404 Not Found for missing customer\", function () {",
+									"    if (pm.response.code === 404) {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property(\"error\");",
+									"        pm.expect(jsonData.error).to.be.a(\"string\");",
+									"    }",
+									"});",
+									"",
+									"// Error scenario: unauthorized",
+									"pm.test(\"Handles 401 Unauthorized\", function () {",
+									"    if (pm.response.code === 401) {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property(\"error\");",
+									"    }",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/customer/name/John%20Doe",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"customer",
+								"name",
+								"John%20Doe"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Customer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Get All Customers - GET",
+									"pm.test(\"Status code is 201 (OK)\", function () {",
+									"    pm.expect(pm.response.code).to.eql(201);",
+									"});",
+									"",
+									"pm.test(\"Response has Content-Type: application/json\", function () {",
+									"    pm.response.to.have.header(\"Content-Type\");",
+									"    pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+									"});",
+									"",
+									"pm.test(\"Each customer has expected fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (Array.isArray(jsonData) && jsonData.length > 0) {",
+									"        jsonData.forEach(function(customer) {",
+									"            pm.expect(customer).to.have.property(\"customerId\");",
+									"            pm.expect(customer).to.have.property(\"name\");",
+									"            pm.expect(customer).to.have.property(\"address\");",
+									"            pm.expect(customer).to.have.property(\"phoneNumber\");",
+									"        });",
+									"    }",
+									"});",
+									"",
+									"// Save the customerId from the response as an environment variable 'customerIdTest'",
+									"if (pm.response.code === 201 || pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData && jsonData.customerId) {",
+									"        pm.environment.set(\"customerIdTest\", jsonData.customerId);",
+									"        pm.test(\"customerId saved as environment variable customerIdTest\", function () {",
+									"            pm.expect(pm.environment.get(\"customerIdTest\")).to.eql(jsonData.customerId);",
+									"        });",
+									"    } else {",
+									"        pm.test(\"customerId not found in response\", function () {",
+									"            pm.expect(jsonData.customerId).to.not.be.undefined;",
+									"        });",
+									"    }",
+									"} else {",
+									"    pm.test(\"Request did not succeed\", function () {",
+									"        pm.expect([200, 201]).to.include(pm.response.code);",
+									"    });",
+									"}",
+									"",
+									"// Error scenario: unauthorized",
+									"pm.test(\"Handles 401 Unauthorized\", function () {",
+									"    if (pm.response.code === 401) {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property(\"error\");",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe\",\n    \"address\": \"123 Main St\",\n    \"phoneNumber\": \"555-555-1234\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/customer",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"customer"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Customer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Update Customer - PUT",
+									"pm.test(\"Status code is 204 (OK)\", function () {",
+									"    pm.expect(pm.response.code).to.eql(204);",
+									"});",
+									"",
+									"// Error scenario: not found",
+									"pm.test(\"Handles 404 Not Found for missing customer\", function () {",
+									"    if (pm.response.code === 404) {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property(\"error\");",
+									"        pm.expect(jsonData.error).to.be.a(\"string\");",
+									"    }",
+									"});",
+									"",
+									"// Error scenario: invalid input",
+									"pm.test(\"Handles 400 Bad Request for invalid input\", function () {",
+									"    if (pm.response.code === 400) {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property(\"error\");",
+									"        pm.expect(jsonData.error).to.be.a(\"string\");",
+									"    }",
+									"});",
+									"",
+									"// Error scenario: unauthorized",
+									"pm.test(\"Handles 401 Unauthorized\", function () {",
+									"    if (pm.response.code === 401) {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property(\"error\");",
+									"    }",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Jane Doe\",\n    \"address\": \"456 Oak Ave\",\n    \"phoneNumber\": \"555-555-5678\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/customer/{{customerIdTest}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"customer",
+								"{{customerIdTest}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Customer",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Delete Customer - DELETE",
+									"pm.test(\"Status code is 204 (No Content) or 200 (OK)\", function () {",
+									"    pm.expect([200, 204]).to.include(pm.response.code);",
+									"});",
+									"",
+									"pm.test(\"Response has appropriate Content-Type or is empty\", function () {",
+									"    if (pm.response.code === 204) {",
+									"        pm.expect(pm.response.text()).to.be.empty;",
+									"    } else {",
+									"        pm.response.to.have.header(\"Content-Type\");",
+									"        pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/json\");",
+									"    }",
+									"});",
+									"",
+									"// Error scenario: not found",
+									"pm.test(\"Handles 404 Not Found for missing customer\", function () {",
+									"    if (pm.response.code === 404) {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property(\"error\");",
+									"        pm.expect(jsonData.error).to.be.a(\"string\");",
+									"    }",
+									"});",
+									"",
+									"// Error scenario: unauthorized",
+									"pm.test(\"Handles 401 Unauthorized\", function () {",
+									"    if (pm.response.code === 401) {",
+									"        var jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property(\"error\");",
+									"    }",
+									"});",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/customer/{{customerIdTest}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"customer",
+								"{{customerIdTest}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwt_token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Product",
+			"item": [
+				{
+					"name": "Get All Products",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Get All Products - Comprehensive Tests",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(Array.isArray(jsonData)).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Each product has required fields and valid types\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    jsonData.forEach(product => {",
+									"        pm.expect(product).to.have.property(\"productId\");",
+									"        pm.expect(product).to.have.property(\"name\");",
+									"        pm.expect(product).to.have.property(\"price\");",
+									"        pm.expect(product).to.have.property(\"stockQuantity\");",
+									"        pm.expect(product.productId).to.be.a(\"number\");",
+									"        pm.expect(product.name).to.be.a(\"string\");",
+									"        pm.expect(product.price).to.be.a(\"number\");",
+									"        pm.expect(product.stockQuantity).to.be.a(\"number\");",
+									"    });",
+									"});",
+									"",
+									"pm.test(\"No duplicate productIds\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    const ids = jsonData.map(p => p.productId);",
+									"    const uniqueIds = new Set(ids);",
+									"    pm.expect(uniqueIds.size).to.eql(ids.length);",
+									"});",
+									"",
+									"if (pm.response.code === 401 || pm.response.code === 403) {",
+									"    pm.test(\"Unauthorized or Forbidden\", function () {",
+									"        pm.expect([401, 403]).to.include(pm.response.code);",
+									"    });",
+									"}",
+									"",
+									"// Save first productId for use in other requests",
+									"const jsonData = pm.response.json();",
+									"if (Array.isArray(jsonData) && jsonData.length > 0) {",
+									"    pm.environment.set(\"ProductId\", jsonData[0].productId);",
+									"} else {",
+									"    pm.environment.unset(\"ProductId\");",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/product",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"product"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product By Id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"// Get Product By Id (Alternate) - Comprehensive Tests",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is a product object\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an(\"object\");",
+									"});",
+									"",
+									"pm.test(\"Product object has required fields and valid types\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"productId\");",
+									"    pm.expect(jsonData).to.have.property(\"name\");",
+									"    pm.expect(jsonData).to.have.property(\"price\");",
+									"    pm.expect(jsonData).to.have.property(\"stockQuantity\");",
+									"    pm.expect(jsonData.productId).to.be.a(\"number\");",
+									"    pm.expect(jsonData.name).to.be.a(\"string\");",
+									"    pm.expect(jsonData.price).to.be.a(\"number\");",
+									"    pm.expect(jsonData.stockQuantity).to.be.a(\"number\");",
+									"});",
+									"",
+									"// Handle not found",
+									"if (pm.response.code === 404) {",
+									"    pm.test(\"Product not found returns 404\", function () {",
+									"        pm.expect(pm.response.code).to.eql(404);",
+									"    });",
+									"}",
+									"",
+									"// Handle unauthorized/forbidden",
+									"if (pm.response.code === 401 || pm.response.code === 403) {",
+									"    pm.test(\"Unauthorized or Forbidden\", function () {",
+									"        pm.expect([401, 403]).to.include(pm.response.code);",
+									"    });",
+									"}",
+									"",
+									"// Save productId for use in other requests",
+									"const jsonData = pm.response.json();",
+									"if (jsonData && jsonData.productId) {",
+									"    pm.environment.set(\"ProductId\", jsonData.productId);",
+									"} else {",
+									"    pm.environment.unset(\"ProductId\");",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/product/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"product",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product By Name",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Get Product By Name - Comprehensive Tests",
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is a product object\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an(\"object\");",
+									"});",
+									"",
+									"pm.test(\"Product object has required fields and valid types\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"productId\");",
+									"    pm.expect(jsonData).to.have.property(\"name\");",
+									"    pm.expect(jsonData).to.have.property(\"price\");",
+									"    pm.expect(jsonData).to.have.property(\"stockQuantity\");",
+									"    pm.expect(jsonData.productId).to.be.a(\"number\");",
+									"    pm.expect(jsonData.name).to.be.a(\"string\");",
+									"    pm.expect(jsonData.price).to.be.a(\"number\");",
+									"    pm.expect(jsonData.stockQuantity).to.be.a(\"number\");",
+									"});",
+									"",
+									"// Handle not found",
+									"if (pm.response.code === 404) {",
+									"    pm.test(\"Product not found returns 404\", function () {",
+									"        pm.expect(pm.response.code).to.eql(404);",
+									"    });",
+									"}",
+									"",
+									"// Handle unauthorized/forbidden",
+									"if (pm.response.code === 401 || pm.response.code === 403) {",
+									"    pm.test(\"Unauthorized or Forbidden\", function () {",
+									"        pm.expect([401, 403]).to.include(pm.response.code);",
+									"    });",
+									"}",
+									"",
+									"// Save productId for use in other requests",
+									"const jsonData = pm.response.json();",
+									"if (jsonData && jsonData.productId) {",
+									"    pm.environment.set(\"ProductId\", jsonData.productId);",
+									"} else {",
+									"    pm.environment.unset(\"ProductId\");",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/product/name/Small%20Plastic%20Gloves",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"product",
+								"name",
+								"Small%20Plastic%20Gloves"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Create Product - Comprehensive Tests",
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response is a product object\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an(\"object\");",
+									"});",
+									"",
+									"pm.test(\"Product object has required fields and valid types\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"productId\");",
+									"    pm.expect(jsonData).to.have.property(\"name\");",
+									"    pm.expect(jsonData).to.have.property(\"price\");",
+									"    pm.expect(jsonData).to.have.property(\"stockQuantity\");",
+									"    pm.expect(jsonData.productId).to.be.a(\"number\");",
+									"    pm.expect(jsonData.name).to.be.a(\"string\");",
+									"    pm.expect(jsonData.price).to.be.a(\"number\");",
+									"    pm.expect(jsonData.stockQuantity).to.be.a(\"number\");",
+									"});",
+									"",
+									"// Handle bad request",
+									"if (pm.response.code === 400) {",
+									"    pm.test(\"Bad request returns 400\", function () {",
+									"        pm.expect(pm.response.code).to.eql(400);",
+									"        const jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property(\"error\");",
+									"    });",
+									"}",
+									"",
+									"// Handle unauthorized/forbidden",
+									"if (pm.response.code === 401 || pm.response.code === 403) {",
+									"    pm.test(\"Unauthorized or Forbidden\", function () {",
+									"        pm.expect([401, 403]).to.include(pm.response.code);",
+									"    });",
+									"}",
+									"",
+									"// Save productId for use in other requests",
+									"const jsonData = pm.response.json();",
+									"if (jsonData && jsonData.productId) {",
+									"    pm.environment.set(\"productId\", jsonData.productId);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"New Gadget\",\n    \"price\": 99.99,\n    \"stockQuantity\": 100\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/product",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"product"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Update Product - Comprehensive Tests",
+									"pm.test(\"Status code is 200 or 204\", function () {",
+									"    pm.expect([200, 204]).to.include(pm.response.code);",
+									"});",
+									"",
+									"if (pm.response.code === 200) {",
+									"    pm.test(\"Response is a product object\", function () {",
+									"        const jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.be.an(\"object\");",
+									"    });",
+									"    pm.test(\"Product object has required fields and valid types\", function () {",
+									"        const jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.have.property(\"productId\");",
+									"        pm.expect(jsonData).to.have.property(\"name\");",
+									"        pm.expect(jsonData).to.have.property(\"price\");",
+									"        pm.expect(jsonData).to.have.property(\"stockQuantity\");",
+									"        pm.expect(jsonData.productId).to.be.a(\"number\");",
+									"        pm.expect(jsonData.name).to.be.a(\"string\");",
+									"        pm.expect(jsonData.price).to.be.a(\"number\");",
+									"        pm.expect(jsonData.stockQuantity).to.be.a(\"number\");",
+									"    });",
+									"}",
+									"",
+									"// Handle not found",
+									"if (pm.response.code === 404) {",
+									"    pm.test(\"Product not found returns 404\", function () {",
+									"        pm.expect(pm.response.code).to.eql(404);",
+									"    });",
+									"}",
+									"",
+									"// Handle unauthorized/forbidden",
+									"if (pm.response.code === 401 || pm.response.code === 403) {",
+									"    pm.test(\"Unauthorized or Forbidden\", function () {",
+									"        pm.expect([401, 403]).to.include(pm.response.code);",
+									"    });",
+									"}",
+									"",
+									"// Save updated productId if present",
+									"if (pm.response.code === 200) {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData && jsonData.productId) {",
+									"        pm.environment.set(\"productId\", jsonData.productId);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Gadget\",\n    \"price\": 129.99,\n    \"stockQuantity\": 50\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/product/{{productId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"product",
+								"{{productId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Product",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Delete Product - Comprehensive Tests",
+									"pm.test(\"Status code is 200, 202, or 204\", function () {",
+									"    pm.expect([200, 202, 204]).to.include(pm.response.code);",
+									"});",
+									"",
+									"// Handle not found",
+									"if (pm.response.code === 404) {",
+									"    pm.test(\"Product not found returns 404\", function () {",
+									"        pm.expect(pm.response.code).to.eql(404);",
+									"    });",
+									"}",
+									"",
+									"// Handle unauthorized/forbidden",
+									"if (pm.response.code === 401 || pm.response.code === 403) {",
+									"    pm.test(\"Unauthorized or Forbidden\", function () {",
+									"        pm.expect([401, 403]).to.include(pm.response.code);",
+									"    });",
+									"}",
+									"",
+									"// Optionally, check for response body if present",
+									"if (pm.response.code === 200) {",
+									"    pm.test(\"Response body confirms deletion\", function () {",
+									"        const jsonData = pm.response.json();",
+									"        pm.expect(jsonData).to.be.an(\"object\");",
+									"        pm.expect(jsonData).to.have.property(\"message\");",
+									"        pm.expect(jsonData.message.toLowerCase()).to.include(\"deleted\");",
+									"    });",
+									"}",
+									"",
+									"// Unset ProductId after deletion",
+									"if ([200, 202, 204].includes(pm.response.code)) {",
+									"    pm.environment.unset(\"ProductId\");",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/product/{{productId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"product",
+								"{{productId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwt_token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Orders",
+			"item": [
+				{
+					"name": "Get All Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order By Id",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/your-order-id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"your-order-id"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customerId\": \"your-customer-id\",\n    \"discountAmount\": 10.00,\n    \"orderItems\": [\n        {\n            \"productId\": 1,\n            \"quantity\": 2,\n            \"discountAmount\": 1.50\n        },\n        {\n            \"productId\": 2,\n            \"quantity\": 1\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Order",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/your-order-id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"your-order-id"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Item to Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productId\": 3,\n    \"quantity\": 1,\n    \"discountAmount\": 0\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/your-order-id/items",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"your-order-id",
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Order Item",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"quantity\": 5\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/your-order-id/items/your-order-item-id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"your-order-id",
+								"items",
+								"your-order-item-id"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Order Item",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/your-order-id/items/your-order-item-id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"your-order-id",
+								"items",
+								"your-order-item-id"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Order Status",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "\"Shipped\"",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/your-order-id/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"your-order-id",
+								"status"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwt_token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	]
+}
