@@ -7,5 +7,6 @@ namespace WebApplication1.DTOs
     {
         public Guid CustomerId { get; set; }
         public List<CreateOrderItemDto> OrderItems { get; set; } = new();
+        public decimal? DiscountAmount { get; set; }
     }
 }

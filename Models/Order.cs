@@ -9,7 +9,9 @@
         public Guid OrderId { get; set; }
         public Guid CustomerId { get; set; }
         public virtual Customer? Customer { get; set; }
-        public DateTime OrderDate { get; set; } 
+        public DateTime OrderDate { get; set; }
+        public OrderStatus Status { get; set; }
+        public decimal DiscountAmount { get; set; }
 
         public virtual List<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 

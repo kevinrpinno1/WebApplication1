@@ -14,6 +14,8 @@ namespace WebApplication1.Models
 
        // [Range(0.01, (double)decimal.MaxValue, ErrorMessage = "Price must be greater than zero.")]
         public decimal Price { get; set; }
-        
+        public int StockQuantity { get; set; }
+
+
     }
 }

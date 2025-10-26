@@ -33,23 +33,25 @@ namespace WebApplication1.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GetCustomerDto>>> GetCustomers(CancellationToken ct)
         {
-            var data = await _context.Customers
+            var query = _context.Customers
                 .AsNoTracking()
-                .ProjectTo<GetCustomerDto>(_mapper.ConfigurationProvider)
-                .ToListAsync(ct);
+                .ProjectTo<GetCustomerDto>(_mapper.ConfigurationProvider);
 
-            return Ok(data);
+            var customers = await query.ToListAsync(ct);
+
+            return Ok(customers);
         }
 
         // GET: api/customers/{id}
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<GetCustomerDto>> GetCustomersById(Guid id, CancellationToken ct)
         {
-            var customer = await _context.Customers
+            var query = _context.Customers
                 .AsNoTracking()
                 .Where(c => c.CustomerId == id)
-                .ProjectTo<GetCustomerDto>(_mapper.ConfigurationProvider)
-                .FirstOrDefaultAsync(ct);
+                .ProjectTo<GetCustomerDto>(_mapper.ConfigurationProvider);
+
+            var customer = await query.FirstOrDefaultAsync(ct);
 
             if (customer == null)
             {
@@ -89,6 +91,7 @@ namespace WebApplication1.Controllers
             }
 
             var customer = await _context.Customers.FindAsync(new object[] { id }, ct);
+
             if(customer == null)
                 return NotFound();
 

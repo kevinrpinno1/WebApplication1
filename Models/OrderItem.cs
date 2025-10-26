@@ -20,5 +20,6 @@ namespace WebApplication1.Models
 
         [Range(0.00, (double)decimal.MaxValue, ErrorMessage = "Unit Price cannot be negative.")]
         public decimal UnitPrice { get; set; }
+        public decimal DiscountAmount { get; set; }
     }
 }

@@ -13,6 +13,11 @@ namespace Data.Seed
             public List<string> OilersEmails { get; set; } = new();
         }
 
+        private static readonly JsonSerializerOptions _jsonSerializerOptions = new()
+        {
+            PropertyNameCaseInsensitive = true
+        };
+
         // seeding demo users from the emails.json file here 
         // reading the file into the two lists of emails, then creating users with the desired roles and passwords
         public static async Task SeedDemoUsersAsync(UserManager<IdentityUser> userManager, RoleManager<IdentityRole> roleManager, Constants _constants)
@@ -23,10 +28,8 @@ namespace Data.Seed
             if (!File.Exists(path)) return;
 
             var emailSeedJson = await File.ReadAllTextAsync(path);
-            var emailData = JsonSerializer.Deserialize<EmailSeed>(emailSeedJson, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
+            var emailData = JsonSerializer.Deserialize<EmailSeed>(emailSeedJson, _jsonSerializerOptions);
+
             if (emailData == null) return;
 
             await SeedUserGroupAsync(userManager, 

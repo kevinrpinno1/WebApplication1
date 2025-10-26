@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Data;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
@@ -31,10 +32,12 @@ namespace WebApplication1.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GetProductDto>>> GetProducts(CancellationToken ct)
         {
-            var products = await _context.Products
+            var query = _context.Products
                 .AsNoTracking()
-                .Select(p => _mapper.Map<GetProductDto>(p))
-                .ToListAsync(ct);
+                .ProjectTo<GetProductDto>(_mapper.ConfigurationProvider);
+
+            var products = await query.ToListAsync(ct);
+
             return Ok(products);
         }
 
@@ -42,11 +45,12 @@ namespace WebApplication1.Controllers
         [HttpGet("{id:int}")]
         public async Task<ActionResult<GetProductDto>> GetProductById(int id, CancellationToken ct)
         {
-            var product = await _context.Products
+            var query = _context.Products
                 .AsNoTracking()
                 .Where(p => p.ProductId == id)
-                .Select(p => _mapper.Map<GetProductDto>(p))
-                .FirstOrDefaultAsync(ct);
+                .ProjectTo<GetProductDto>(_mapper.ConfigurationProvider);
+
+            var product = await query.FirstOrDefaultAsync(ct);
 
             if (product == null)
             {

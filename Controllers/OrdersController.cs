@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using WebApplication1.Configuration;
 using WebApplication1.DTOs;
 using WebApplication1.Models;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace WebApplication1.Controllers
 {
@@ -34,10 +35,11 @@ namespace WebApplication1.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GetOrderDto>>> GetOrders(CancellationToken ct)
         {
-            var orders = await _context.Orders
+            var query = _context.Orders
                 .AsNoTracking()
-                .Select(o => _mapper.Map<GetOrderDto>(o))
-                .ToListAsync(ct);
+                .ProjectTo<GetOrderDto>(_mapper.ConfigurationProvider);
+
+            var orders = await query.ToListAsync(ct);
             return Ok(orders);
         }
 
@@ -45,11 +47,12 @@ namespace WebApplication1.Controllers
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<GetOrderDto>> GetOrderById(Guid id, CancellationToken ct)
         {
-            var order = await _context.Orders
+            var query = _context.Orders
                 .AsNoTracking()
                 .Where(o => o.OrderId == id)
-                .Select(o => _mapper.Map<GetOrderDto>(o))
-                .FirstOrDefaultAsync(ct);
+                .ProjectTo<GetOrderDto>(_mapper.ConfigurationProvider);
+
+            var order = await query.FirstOrDefaultAsync(ct);
 
             if (order == null)
             {
@@ -73,16 +76,22 @@ namespace WebApplication1.Controllers
 
             foreach (var item in order.OrderItems)
             {
-                var product = await _context.Products.FindAsync(item.ProductId);
-                if (product != null)
+                var product = await _context.Products.FindAsync(new object[] { item.ProductId }, ct);
+                
+                if (product == null)
                 {
-                    item.UnitPrice = product.Price;
-                }
-                else
-                {
-                    // Handle case where product ID is invalid
                     return BadRequest($"Product with ID {item.ProductId} not found.");
                 }
+                if (product.StockQuantity < item.Quantity)
+                {
+                    return BadRequest($"Not enough stock for Product ID {item.ProductId}. " +
+                                      $"Available: {product.StockQuantity}, Requested: {item.Quantity}.");
+                }
+
+                product.StockQuantity -= item.Quantity;
+
+                item.UnitPrice = product.Price;
+
             }
 
             _context.Orders.Add(order);
@@ -178,5 +187,23 @@ namespace WebApplication1.Controllers
 
             return NoContent();
         }
+
+        // POST: api/orders/{id}/status
+        [HttpPost("{id:guid}/status")]
+        [Authorize(Roles = RoleConstants.Admin)]
+        public async Task<IActionResult> UpdateOrderStatus(Guid id, [FromBody] OrderStatus newStatus, CancellationToken ct)
+        {
+            var order = await _context.Orders.FindAsync(new object[] { id }, ct);
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            order.Status = newStatus;
+            await _context.SaveChangesAsync(ct);
+
+            return NoContent();
+        }
+
     }
 }

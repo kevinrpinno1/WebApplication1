@@ -19,14 +19,33 @@ namespace WebApplication1.Profiles
             CreateMap<UpdateProductDto, Product>();
 
             // Order Mappings
-            CreateMap<Order, GetOrderDto>();
-            CreateMap<CreateOrderDto, Order>();
+            CreateMap<Order, GetOrderDto>()
+                .ForMember(dest => dest.CustomerName, opt => 
+                    opt.MapFrom(src => src.Customer != null ? src.Customer.Name : string.Empty))
+                .ForMember(dest => dest.Status, opt => 
+                    opt.MapFrom(src => src.Status.ToString()))
+                .ForMember(dest => dest.Subtotal, opt => 
+                    opt.MapFrom(src => src.OrderItems.Sum(item => item.Quantity * item.UnitPrice)))
+                .ForMember(dest => dest.OrderDiscount, opt => 
+                    opt.MapFrom(src => src.DiscountAmount))
+                .ForMember(dest => dest.OrderTotal, opt => 
+                    opt.MapFrom(src => src.OrderItems.Sum(item => 
+                                item.Quantity * (item.UnitPrice - item.DiscountAmount)) - src.DiscountAmount));
+
+            CreateMap<CreateOrderDto, Order>()
+                .ForMember(dest => dest.Status, opt => 
+                    opt.MapFrom(src => OrderStatus.Pending)); 
 
             // OrderItem Mappings
+            CreateMap<OrderItem, GetOrderItemDto>()
+                .ForMember(dest => dest.ProductName, opt => 
+                    opt.MapFrom(src => src.Product != null ? src.Product.Name : string.Empty))
+                .ForMember(dest => dest.LineTotal, opt => 
+                    opt.MapFrom(src => (src.Quantity * src.UnitPrice) - src.DiscountAmount));
+
             CreateMap<CreateOrderItemDto, OrderItem>();
             CreateMap<UpdateOrderItemDto, OrderItem>();
-            CreateMap<OrderItem, GetOrderItemDto>()
-                .ForMember(dest => dest.ProductName, opt => opt.MapFrom(src => src.Product != null ? src.Product.Name : string.Empty));
+
         }
     }
 }
