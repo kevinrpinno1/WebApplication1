@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,20 +18,24 @@ namespace WebApplication1.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
-        private readonly ITokenService _tokenService; 
+        private readonly ITokenService _tokenService;
+        private readonly IValidator<UserDto> _userValidator;
 
-        public AuthController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ITokenService tokenService)
+
+        public AuthController(UserManager<IdentityUser> userManager, SignInManager<IdentityUser> signInManager, ITokenService tokenService, IValidator<UserDto> userValidator)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _tokenService = tokenService;
+            _userValidator = userValidator;
         }
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] UserDto userDto)
         {
-            if (!ModelState.IsValid) 
-                return BadRequest(ModelState);
+            var validationResult = await _userValidator.ValidateAsync(userDto);
+            if (!validationResult.IsValid)
+                return BadRequest(validationResult.Errors);
 
             var user = new IdentityUser { UserName = userDto.Email, Email = userDto.Email };
 
@@ -66,8 +71,9 @@ namespace WebApplication1.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> LoginUser([FromBody] UserDto userDto)
         {
-            if (!ModelState.IsValid) 
-                return BadRequest(ModelState);
+            var validationResult = await _userValidator.ValidateAsync(userDto);
+            if (!validationResult.IsValid)
+                return BadRequest(validationResult.Errors);
 
             var user = await _userManager.FindByEmailAsync(userDto.Email!);
 

@@ -23,7 +23,6 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 // binding app settings to classes for DI
 // keeping only the required information in each class for security and clarity
 // creating singleton services as these settings shouldn't change during app runtime
-// IOptions could be used if prefered or settings need to be changed during runtime (log level or feature flag toggle)
 var jwtSettings = new JwtSettings();
 builder.Configuration.GetSection("JwtSettings").Bind(jwtSettings);
 builder.Services.AddSingleton(jwtSettings);
@@ -34,12 +33,7 @@ builder.Services.AddSingleton(constants);
 // --------------------------------------------------------------------
 
 builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddValidatorsFromAssemblyContaining<CustomerValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<ProductInterfaceValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderDtoValidator>();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderItemDtoValidator>();
-
-
+builder.Services.AddValidatorsFromAssemblyContaining<UserDtoValidator>();
 
 // --------------------------------------------------------------------
 // Db Context and Identity setup
