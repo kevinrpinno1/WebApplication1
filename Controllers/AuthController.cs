@@ -59,7 +59,7 @@ namespace WebApplication1.Controllers
         public async Task<IActionResult> AnonLoginUser()
         {
             var users = await _userManager.Users.ToListAsync();
-            if (!users.Any()) 
+            if (users.Count == 0)
                 return NotFound(new { Message = "No demo users found in the database." });
 
             var randomUser = users[Random.Shared.Next(users.Count)];

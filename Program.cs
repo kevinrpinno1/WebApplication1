@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using WebApplication1.Configuration;
+using WebApplication1.Data.Seed;
 using WebApplication1.Services;
 using WebApplication1.Validators;
 
@@ -168,6 +169,8 @@ if (app.Environment.IsDevelopment())
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
             await DemoIdentityUserSeeder.SeedDemoUsersAsync(userManager, roleManager, constants);
+
+            await DemoDataSeeder.SeedDemoDataAsync(dbContext);
         }
         catch (Exception ex)
         {

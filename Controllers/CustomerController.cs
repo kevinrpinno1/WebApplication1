@@ -29,7 +29,7 @@ namespace WebApplication1.Controllers
             _mapper = mapper;
         }
 
-        // GET: api/customers
+        // GET: api/customer
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GetCustomerDto>>> GetCustomers(CancellationToken ct)
         {
@@ -42,7 +42,7 @@ namespace WebApplication1.Controllers
             return Ok(customers);
         }
 
-        // GET: api/customers/{id}
+        // GET: api/customer/{id}
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<GetCustomerDto>> GetCustomersById(Guid id, CancellationToken ct)
         {
@@ -61,7 +61,24 @@ namespace WebApplication1.Controllers
             return Ok(customer);
         }
 
-        // POST: api/customers
+        // GET api/customer/{name}
+        [HttpGet("name/{name}")]
+        public async Task<ActionResult<GetCustomerDto>> GetCustomerByName(string name, CancellationToken ct)
+        {
+            var query = _context.Customers
+                .AsNoTracking()
+                .Where(c => c.Name.ToLower() == name.ToLower())
+                .ProjectTo<GetCustomerDto>(_mapper.ConfigurationProvider);
+
+            var customer = await query.FirstOrDefaultAsync(ct);
+            if (customer == null)
+            {
+                return NotFound();
+            }
+            return Ok(customer);
+        }
+
+        // POST: api/customer
         [HttpPost]
         public async Task<ActionResult<GetCustomerDto>> CreateCustomer([FromBody] CreateCustomerDto dto, CancellationToken ct)
         {
@@ -80,7 +97,7 @@ namespace WebApplication1.Controllers
             return CreatedAtAction(nameof(GetCustomersById), new { id = customer.CustomerId }, resultDto);
         }
 
-        // PUT: api/customers/{id}
+        // PUT: api/customer/{id}
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> UpdateCustomer(Guid id, [FromBody] UpdateCustomerDto dto, CancellationToken ct)
         {
@@ -101,7 +118,7 @@ namespace WebApplication1.Controllers
             return NoContent();
         }
 
-        // DELETE: api/customers/{id}
+        // DELETE: api/customer/{id}
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteCustomer(Guid id, CancellationToken ct)
         {

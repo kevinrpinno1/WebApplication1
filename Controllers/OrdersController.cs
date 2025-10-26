@@ -109,7 +109,7 @@ namespace WebApplication1.Controllers
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteOrder(Guid id, CancellationToken ct)
         {
-            var order = await _context.Orders.FindAsync(id);
+            var order = await _context.Orders.FindAsync(id, ct);
             if (order == null)
             {
                 return NotFound();
@@ -190,7 +190,6 @@ namespace WebApplication1.Controllers
 
         // POST: api/orders/{id}/status
         [HttpPost("{id:guid}/status")]
-        [Authorize(Roles = RoleConstants.Admin)]
         public async Task<IActionResult> UpdateOrderStatus(Guid id, [FromBody] OrderStatus newStatus, CancellationToken ct)
         {
             var order = await _context.Orders.FindAsync(new object[] { id }, ct);

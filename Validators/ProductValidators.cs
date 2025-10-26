@@ -30,6 +30,9 @@ namespace WebApplication1.Validators
 
             RuleFor(x => x.Name)
                 .NotEmpty().WithMessage("Product name is required.");
+
+            RuleFor(x => x.StockQuantity)
+                .GreaterThanOrEqualTo(0).WithMessage("Stock quantity cannot be negative.");
         }
     }
 

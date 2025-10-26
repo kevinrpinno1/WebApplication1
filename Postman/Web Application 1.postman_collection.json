@@ -1,0 +1,834 @@
+{
+	"info": {
+		"_postman_id": "24465f50-b4c1-4baa-ad59-f2110a4eb288",
+		"name": "Web Application 1",
+		"description": "Postman collection for easy testing of the Demo API.  \n  \nWhen a token is returned from the Token or Login endpoints, it is saved to a jwt_token variable and auto added to the Customers, Products, and Order calls.  \n  \nbase_url variable is set to localhost:5004.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "19949813"
+	},
+	"item": [
+		{
+			"name": "Auth",
+			"item": [
+				{
+					"name": "Get Anon User Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.collectionVariables.set(\"jwt_token\", jsonData.access_token);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"token"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"Spock_4@UssEnterprise.co\",\n    \"password\": \"LiveLongAndProsper1!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"pm.collectionVariables.set(\"jwt_token\", jsonData.access_token);"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"Spock_4@UssEnterprise.co\",\n    \"password\": \"LiveLongAndProsper1!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"description": "User Registration, Login, and Token authentication endpoints.\n\nAnonymous Token endpoint is fully anonymous. It randomly grabs a user that has been pre seeded into the IdentityUsers and uses it to grab a token.\n\nRegister Users requires an email and password to be entered. The body of the request is pre populated with an email and password.\n\nLogin User requires an email and password to be entered. The body of the request is pre populated with an email and password. Can use the previously registered User to Login here. Token is retrieved upon successful login.\n\nThere is a post-req script that is run and provides a nice visualizer that decodes the JWT token that is returned.",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							"const template = `\r",
+							"<style>\r",
+							"  :root{\r",
+							"    --bg:#0b1220; --card:#121a2b; --muted:#8aa0b5; --text:#e6eef6; --accent:#5aa7ff; --ok:#2bb673; --warn:#ffb020; --bad:#ff5d5d;\r",
+							"    --border: rgba(255,255,255,.08);\r",
+							"  }\r",
+							"  *{box-sizing:border-box}\r",
+							"  body{background:var(--bg); color:var(--text); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; padding:16px}\r",
+							"  h2{margin:0 0 12px 0; font-weight:700; letter-spacing:.2px}\r",
+							"  h3{margin:0 0 10px 0; font-weight:600; letter-spacing:.2px}\r",
+							"  h4{margin:18px 0 8px 0; font-weight:600}\r",
+							"  .grid{display:grid; grid-template-columns: 1.1fr .9fr; gap:16px}\r",
+							"  .card{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; box-shadow: 0 6px 20px rgba(0,0,0,.25)}\r",
+							"  .kv{width:100%; border-collapse:collapse}\r",
+							"  .kv th,.kv td{border-bottom:1px solid var(--border); padding:8px 10px; text-align:left; vertical-align:top; font-size:13px;}\r",
+							"  .kv th{width:220px; color:var(--muted); font-weight:500}\r",
+							"  .muted{color:var(--muted)}\r",
+							"  .row{display:flex; gap:8px; align-items:center; flex-wrap:wrap}\r",
+							"  .badge{display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px; border:1px solid var(--border); background:rgba(255,255,255,.04)}\r",
+							"  .badge.ok{background:rgba(43,182,115,.12); border-color:rgba(43,182,115,.25); color:#bff2d7}\r",
+							"  .badge.bad{background:rgba(255,93,93,.12); border-color:rgba(255,93,93,.25); color:#ffd1d1}\r",
+							"  .badge.warn{background:rgba(255,176,32,.12); border-color:rgba(255,176,32,.25); color:#ffe5b3}\r",
+							"  .chip{display:inline-block; margin:4px 6px 0 0; padding:4px 8px; border:1px solid var(--border); border-radius:8px; font-size:12px; background:rgba(255,255,255,.04)}\r",
+							"  .mono .code, pre{background:#0a0f1a; border:1px solid var(--border); border-radius:8px; padding:10px; overflow:auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; line-height:1.45}\r",
+							"  .small{font-size:12px}\r",
+							"  .section{margin-top:10px}\r",
+							"  .header{display:flex; align-items:baseline; justify-content:space-between; gap:16px}\r",
+							"  .tokenbox{max-height:130px}\r",
+							"  @media (max-width: 980px){ .grid{grid-template-columns: 1fr; } }\r",
+							"</style>\r",
+							"\r",
+							"<div class=\"header\">\r",
+							"  <h2>JWT Inspector</h2>\r",
+							"  <div class=\"row\">\r",
+							"    {{#if times.expired}}\r",
+							"      <span class=\"badge bad\">Expired</span>\r",
+							"    {{else}}\r",
+							"      <span class=\"badge ok\">Active</span>\r",
+							"    {{/if}}\r",
+							"    {{#if times.timeToExpiryHuman}}\r",
+							"      <span class=\"badge\">{{#if times.expired}}Expired {{/if}}{{times.timeToExpiryHuman}}</span>\r",
+							"    {{/if}}\r",
+							"    {{#if standardClaims.azp}}<span class=\"badge\">azp: {{standardClaims.azp}}</span>{{/if}}\r",
+							"    {{#if header.kid}}<span class=\"badge\">kid: {{header.kid}}</span>{{/if}}\r",
+							"    {{#if header.alg}}<span class=\"badge\">alg: {{header.alg}}</span>{{/if}}\r",
+							"  </div>\r",
+							"</div>\r",
+							"\r",
+							"<div class=\"grid\">\r",
+							"  <div class=\"card\">\r",
+							"    <h3>Summary & Standard Claims</h3>\r",
+							"    <table class=\"kv\">\r",
+							"      <tr><th>Issuer (iss)</th><td>{{standardClaims.iss}}</td></tr>\r",
+							"      <tr><th>Subject (sub)</th><td>{{standardClaims.sub}}</td></tr>\r",
+							"      <tr><th>JWT ID (jti)</th><td>{{standardClaims.jti}}</td></tr>\r",
+							"      <tr><th>Audience (aud)</th>\r",
+							"        <td>\r",
+							"          {{#if arrays.aud.length}}\r",
+							"            {{#each arrays.aud}}<span class=\"chip\">{{this}}</span>{{/each}}\r",
+							"          {{else}}{{standardClaims.aud}}{{/if}}\r",
+							"        </td>\r",
+							"      </tr>\r",
+							"      <tr><th>Issued At (iat)</th><td>{{times.iatISO}} <span class=\"muted small\">({{times.iatRelative}})</span></td></tr>\r",
+							"      {{#if times.nbfISO}}<tr><th>Not Before (nbf)</th><td>{{times.nbfISO}} <span class=\"muted small\">({{times.nbfRelative}})</span></td></tr>{{/if}}\r",
+							"      {{#if times.expISO}}<tr><th>Expires (exp)</th><td>{{times.expISO}} <span class=\"muted small\">({{times.expRelative}})</span></td></tr>{{/if}}\r",
+							"    </table>\r",
+							"\r",
+							"    <div class=\"section\">\r",
+							"      <h4>Scopes</h4>\r",
+							"      {{#if arrays.scope.length}}\r",
+							"        <div class=\"row\">{{#each arrays.scope}}<span class=\"chip\">{{this}}</span>{{/each}}</div>\r",
+							"      {{else}}<div class=\"muted small\">None</div>{{/if}}\r",
+							"    </div>\r",
+							"\r",
+							"    <div class=\"section\">\r",
+							"      <h4>Roles</h4>\r",
+							"      {{#if arrays.roles.length}}\r",
+							"        <div class=\"row\">{{#each arrays.roles}}<span class=\"chip\">{{this}}</span>{{/each}}</div>\r",
+							"      {{else}}<div class=\"muted small\">None</div>{{/if}}\r",
+							"    </div>\r",
+							"\r",
+							"    <div class=\"section\">\r",
+							"      <h4>Permissions</h4>\r",
+							"      {{#if arrays.permissions.length}}\r",
+							"        <div class=\"row\">{{#each arrays.permissions}}<span class=\"chip\">{{this}}</span>{{/each}}</div>\r",
+							"      {{else}}<div class=\"muted small\">None</div>{{/if}}\r",
+							"    </div>\r",
+							"  </div>\r",
+							"\r",
+							"  <div class=\"card\">\r",
+							"    <h3>Header</h3>\r",
+							"    <pre class=\"small\">{{headerPretty}}</pre>\r",
+							"    <div class=\"section\">\r",
+							"      <h3>Custom Claims</h3>\r",
+							"      <table class=\"kv\">\r",
+							"        {{#if customClaims}}\r",
+							"          {{#each customClaims}}\r",
+							"            <tr>\r",
+							"              <th>{{@key}}</th>\r",
+							"              <td>{{this}}</td>\r",
+							"            </tr>\r",
+							"          {{/each}}\r",
+							"        {{else}}\r",
+							"          <tr><td colspan=\"2\" class=\"muted small\">No custom claims detected.</td></tr>\r",
+							"        {{/if}}\r",
+							"      </table>\r",
+							"    </div>\r",
+							"  </div>\r",
+							"\r",
+							"  <div class=\"card\" style=\"grid-column:1 / -1\">\r",
+							"    <h3>Raw Token & Payload</h3>\r",
+							"    <div class=\"mono tokenbox\"><div class=\"code\">{{tokenString}}</div></div>\r",
+							"    <div class=\"section\">\r",
+							"      <pre>{{payloadPretty}}</pre>\r",
+							"    </div>\r",
+							"  </div>\r",
+							"</div>\r",
+							"`;\r",
+							"\r",
+							"// --- Helpers ---\r",
+							"function base64UrlDecode(str) {\r",
+							"  // atob needs standard base64\r",
+							"  str = str.replace(/-/g, '+').replace(/_/g, '/');\r",
+							"  // pad\r",
+							"  while (str.length % 4) str += '=';\r",
+							"  return atob(str);\r",
+							"}\r",
+							"function parseJwt(token) {\r",
+							"  const [h, p, s] = token.split('.');\r",
+							"  const header = JSON.parse(base64UrlDecode(h));\r",
+							"  const payload = JSON.parse(base64UrlDecode(p));\r",
+							"  return { header, payload, signature: s };\r",
+							"}\r",
+							"function uniq(arr) {\r",
+							"  return Array.from(new Set(arr.filter(Boolean)));\r",
+							"}\r",
+							"function toISO(sec) {\r",
+							"  if (typeof sec !== 'number') return null;\r",
+							"  return new Date(sec * 1000).toISOString();\r",
+							"}\r",
+							"function rel(sec) {\r",
+							"  if (typeof sec !== 'number') return null;\r",
+							"  const delta = Math.round(sec - Date.now()/1000);\r",
+							"  const abs = Math.abs(delta);\r",
+							"  const units = [\r",
+							"    ['day', 86400],\r",
+							"    ['hour', 3600],\r",
+							"    ['min', 60],\r",
+							"    ['sec', 1],\r",
+							"  ];\r",
+							"  for (const [name, size] of units) {\r",
+							"    if (abs >= size) {\r",
+							"      const v = Math.round(abs/size);\r",
+							"      return delta >= 0 ? `in ${v} ${name}${v>1?'s':''}` : `${v} ${name}${v>1?'s':''} ago`;\r",
+							"    }\r",
+							"  }\r",
+							"  return delta >= 0 ? 'soon' : 'just now';\r",
+							"}\r",
+							"\r",
+							"// --- Find a token in common places ---\r",
+							"let token;\r",
+							"try {\r",
+							"  const json = pm.response.json();\r",
+							"  token = json.access_token || json.id_token || json.token || json.jwt;\r",
+							"} catch (_) {}\r",
+							"\r",
+							"if (!token) {\r",
+							"  const auth = pm.request.headers.get('Authorization');\r",
+							"  if (auth && auth.startsWith('Bearer ')) token = auth.slice(7);\r",
+							"}\r",
+							"if (!token) token = pm.variables.get('jwt'); // optional fallback\r",
+							"\r",
+							"if (!token) {\r",
+							"  pm.visualizer.set('<p style=\"font-family:system-ui\">No JWT found in response or Authorization header.</p>', {});\r",
+							"  return;\r",
+							"}\r",
+							"\r",
+							"// --- Decode & derive ---\r",
+							"const { header, payload } = parseJwt(token);\r",
+							"\r",
+							"// Arrays & nested claims\r",
+							"const audArray = Array.isArray(payload.aud) ? payload.aud : (payload.aud ? [payload.aud] : []);\r",
+							"const scopes = payload.scope\r",
+							"  ? String(payload.scope).trim().split(/\\s+/)\r",
+							"  : (Array.isArray(payload.scp) ? payload.scp : (payload.scp ? [payload.scp] : []));\r",
+							"\r",
+							"// Keycloak-style roles\r",
+							"const roleBuckets = [];\r",
+							"if (payload.realm_access && Array.isArray(payload.realm_access.roles)) {\r",
+							"  roleBuckets.push(...payload.realm_access.roles);\r",
+							"}\r",
+							"if (payload.resource_access && typeof payload.resource_access === 'object') {\r",
+							"  Object.values(payload.resource_access).forEach(svc => {\r",
+							"    if (svc && Array.isArray(svc.roles)) roleBuckets.push(...svc.roles);\r",
+							"  });\r",
+							"}\r",
+							"// Generic roles claim(s)\r",
+							"if (Array.isArray(payload.roles)) roleBuckets.push(...payload.roles);\r",
+							"if (typeof payload.role === 'string') roleBuckets.push(payload.role);\r",
+							"\r",
+							"// Permissions (some IdPs use this)\r",
+							"let permissions = [];\r",
+							"if (Array.isArray(payload.permissions)) permissions = payload.permissions;\r",
+							"\r",
+							"// Standard vs custom claims\r",
+							"const standardKeys = new Set(['iss','sub','aud','exp','nbf','iat','jti','azp','typ','auth_time','nonce']);\r",
+							"const compositeKeys = new Set(['scope','scp','realm_access','resource_access','permissions','roles','role']);\r",
+							"const customClaims = {};\r",
+							"Object.keys(payload).forEach(k => {\r",
+							"  if (!standardKeys.has(k) && !compositeKeys.has(k)) {\r",
+							"    const v = payload[k];\r",
+							"    customClaims[k] = (v && typeof v === 'object') ? JSON.stringify(v, null, 2) : String(v);\r",
+							"  }\r",
+							"});\r",
+							"\r",
+							"// Times\r",
+							"const nowSec = Math.floor(Date.now()/1000);\r",
+							"const iat = typeof payload.iat === 'number' ? payload.iat : undefined;\r",
+							"const exp = typeof payload.exp === 'number' ? payload.exp : undefined;\r",
+							"const nbf = typeof payload.nbf === 'number' ? payload.nbf : undefined;\r",
+							"\r",
+							"const times = {\r",
+							"  nowISO: new Date().toISOString(),\r",
+							"  iatISO: toISO(iat),\r",
+							"  expISO: toISO(exp),\r",
+							"  nbfISO: toISO(nbf),\r",
+							"  iatRelative: iat ? rel(iat) : null,\r",
+							"  expRelative: exp ? rel(exp) : null,\r",
+							"  nbfRelative: nbf ? rel(nbf) : null,\r",
+							"  timeToExpiryHuman: exp ? rel(exp) : null,\r",
+							"  expired: exp ? (nowSec >= exp) : false,\r",
+							"};\r",
+							"\r",
+							"const data = {\r",
+							"  tokenString: token,\r",
+							"  header,\r",
+							"  headerPretty: JSON.stringify(header, null, 2),\r",
+							"  payload,\r",
+							"  payloadPretty: JSON.stringify(payload, null, 2),\r",
+							"  standardClaims: {\r",
+							"    iss: payload.iss || '',\r",
+							"    sub: payload.sub || '',\r",
+							"    aud: Array.isArray(payload.aud) ? payload.aud.join(', ') : (payload.aud || ''),\r",
+							"    jti: payload.jti || '',\r",
+							"    azp: payload.azp || ''\r",
+							"  },\r",
+							"  customClaims,\r",
+							"  arrays: {\r",
+							"    aud: uniq(audArray),\r",
+							"    scope: uniq(scopes),\r",
+							"    roles: uniq(roleBuckets),\r",
+							"    permissions: uniq(permissions)\r",
+							"  },\r",
+							"  times\r",
+							"};\r",
+							"\r",
+							"pm.visualizer.set(template, data);\r",
+							"\r",
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Customers",
+			"item": [
+				{
+					"name": "Get All Customers",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{jwt_token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/customer",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"customer"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/customer/026b0568-7b6e-4aa9-a96f-16fb04b6e4a5",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"customer",
+								"026b0568-7b6e-4aa9-a96f-16fb04b6e4a5"
+							],
+							"query": [
+								{
+									"key": "",
+									"value": "",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Customer",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"John Doe\",\n    \"address\": \"123 Main St\",\n    \"phoneNumber\": \"555-123-4567\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/customer",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"customer"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Customer",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Jane Doe\",\n    \"address\": \"456 Oak Ave\",\n    \"phoneNumber\": \"555-987-6543\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/customer/YOUR_CUSTOMER_ID",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"customer",
+								"YOUR_CUSTOMER_ID"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Customer",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/customer/YOUR_CUSTOMER_ID",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"customer",
+								"YOUR_CUSTOMER_ID"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwt_token}}",
+						"type": "string"
+					}
+				]
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {},
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "Products",
+			"item": [
+				{
+					"name": "Get All Products",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/product",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"product"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/product/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"product",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Product",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Super Widget\",\n    \"price\": 19.99\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/product",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"product"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Product",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Mega Widget\",\n    \"price\": 24.99\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/product/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"product",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Product",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/product/1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"product",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwt_token}}",
+						"type": "string"
+					}
+				]
+			}
+		},
+		{
+			"name": "Orders",
+			"item": [
+				{
+					"name": "Get All Orders",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order By ID",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/fa4a483e-6da5-49a7-a5ae-052f3e82565a",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"fa4a483e-6da5-49a7-a5ae-052f3e82565a"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Order",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"customerId\": \"YOUR_CUSTOMER_ID\",\n    \"orderItems\": [\n        {\n            \"productId\": 1,\n            \"quantity\": 2\n        },\n        {\n            \"productId\": 2,\n            \"quantity\": 1\n        }\n    ]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/orders",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Order",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/YOUR_ORDER_ID",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"YOUR_ORDER_ID"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"auth": {
+				"type": "bearer",
+				"bearer": [
+					{
+						"key": "token",
+						"value": "{{jwt_token}}",
+						"type": "string"
+					}
+				]
+			}
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "jwt_token",
+			"value": ""
+		}
+	]
+}

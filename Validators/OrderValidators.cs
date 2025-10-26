@@ -15,6 +15,10 @@ namespace WebApplication1.Validators
 
             RuleFor(x => x.Quantity)
                 .GreaterThan(0).WithMessage("Quantity must be at least 1.");
+            
+            RuleFor(x => x.DiscountAmount)
+                .GreaterThanOrEqualTo(0).WithMessage("Discount amount cannot be negative.")
+                .When(x => x.DiscountAmount.HasValue);
         }
     }
 
@@ -43,6 +47,10 @@ namespace WebApplication1.Validators
             // Apply the OrderItem validator to each item in the list.
             RuleForEach(x => x.OrderItems)
                 .SetValidator(new CreateOrderItemDtoValidator());
+
+            RuleFor(x => x.DiscountAmount)
+                .GreaterThanOrEqualTo(0).WithMessage("Discount amount cannot be negative.")
+                .When(x => x.DiscountAmount.HasValue);
         }
     }
 

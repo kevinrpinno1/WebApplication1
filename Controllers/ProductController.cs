@@ -13,7 +13,7 @@ namespace WebApplication1.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class ProductController : Controller
+    public class ProductController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
         private readonly IValidator<CreateProductDto> _createValidator;
@@ -28,7 +28,7 @@ namespace WebApplication1.Controllers
             _mapper = mapper;
         }
 
-        // GET: api/products
+        // GET: api/product
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GetProductDto>>> GetProducts(CancellationToken ct)
         {
@@ -60,7 +60,24 @@ namespace WebApplication1.Controllers
             return Ok(product);
         }
 
-        // POST: api/products
+        // GET api/product/{name}
+        [HttpGet("name/{name}")]
+        public async Task<ActionResult<GetProductDto>> GetProductByName(string name, CancellationToken ct)
+        {
+            var query = _context.Products
+                .AsNoTracking()
+                .Where(c => c.Name.ToLower() == name.ToLower())
+                .ProjectTo<GetProductDto>(_mapper.ConfigurationProvider);
+
+            var product = await query.FirstOrDefaultAsync(ct);
+            if (product == null)
+            {
+                return NotFound();
+            }
+            return Ok(product);
+        }
+
+        // POST: api/product
         [HttpPost]
         public async Task<ActionResult<GetProductDto>> CreateProduct([FromBody] CreateProductDto dto, CancellationToken ct)
         {
@@ -80,7 +97,7 @@ namespace WebApplication1.Controllers
 
             return CreatedAtAction(nameof(GetProductById), new { id = product.ProductId }, resultDto);
         }
-        // PUT: api/products/{id}
+        // PUT: api/product/{id}
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] UpdateProductDto dto, CancellationToken ct)
         {
@@ -103,7 +120,7 @@ namespace WebApplication1.Controllers
             return NoContent();
         }
 
-        // DELETE: api/products/{id}
+        // DELETE: api/product/{id}
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteProduct(int id, CancellationToken ct)
         {

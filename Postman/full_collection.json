@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d",
-		"name": "Web Application 1",
+		"name": "Web API Demo",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -12,15 +12,15 @@
 					"name": "Register User",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"testuser@example.com\",\n    \"password\": \"Password123!\"\n}"
+							"raw": "{\n    \"email\": \"testuser@example.com\",\n    \"password\": \"Password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/auth/register",
@@ -38,29 +38,17 @@
 				},
 				{
 					"name": "Login User",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.collectionVariables.set(\"jwt_token\", jsonData.access_token);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"email\": \"testuser@example.com\",\n    \"password\": \"Password123!\"\n}"
+							"raw": "{\n    \"email\": \"testuser@example.com\",\n    \"password\": \"Password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/auth/login",
@@ -77,19 +65,7 @@
 					"response": []
 				},
 				{
-					"name": "Get Demo User Token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"var jsonData = pm.response.json();",
-									"pm.collectionVariables.set(\"jwt_token\", jsonData.access_token);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
+					"name": "Get Anonymous Token",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -110,7 +86,7 @@
 			]
 		},
 		{
-			"name": "Customers",
+			"name": "Customer",
 			"item": [
 				{
 					"name": "Get All Customers",
@@ -118,32 +94,52 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customers",
+							"raw": "{{baseUrl}}/api/customer",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"customers"
+								"customer"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Get Customer By ID",
+					"name": "Get Customer By Id",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customers/YOUR_CUSTOMER_ID",
+							"raw": "{{baseUrl}}/api/customer/your-customer-id",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"customers",
-								"YOUR_CUSTOMER_ID"
+								"customer",
+								"your-customer-id"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer By Name",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/customer/name/John%20Doe",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"customer",
+								"name",
+								"John%20Doe"
 							]
 						}
 					},
@@ -153,24 +149,24 @@
 					"name": "Create Customer",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"John Doe\",\n    \"address\": \"123 Main St\",\n    \"phoneNumber\": \"555-123-4567\"\n}"
+							"raw": "{\n    \"name\": \"John Doe\",\n    \"address\": \"123 Main St\",\n    \"phoneNumber\": \"555-555-1234\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/customers",
+							"raw": "{{baseUrl}}/api/customer",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"customers"
+								"customer"
 							]
 						}
 					},
@@ -180,25 +176,25 @@
 					"name": "Update Customer",
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Jane Doe\",\n    \"address\": \"456 Oak Ave\",\n    \"phoneNumber\": \"555-987-6543\"\n}"
+							"raw": "{\n    \"name\": \"Jane Doe\",\n    \"address\": \"456 Oak Ave\",\n    \"phoneNumber\": \"555-555-5678\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/customers/YOUR_CUSTOMER_ID",
+							"raw": "{{baseUrl}}/api/customer/your-customer-id",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"customers",
-								"YOUR_CUSTOMER_ID"
+								"customer",
+								"your-customer-id"
 							]
 						}
 					},
@@ -210,14 +206,14 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/customers/YOUR_CUSTOMER_ID",
+							"raw": "{{baseUrl}}/api/customer/your-customer-id",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"customers",
-								"YOUR_CUSTOMER_ID"
+								"customer",
+								"your-customer-id"
 							]
 						}
 					},
@@ -233,10 +229,30 @@
 						"type": "string"
 					}
 				]
-			}
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
 		},
 		{
-			"name": "Products",
+			"name": "Product",
 			"item": [
 				{
 					"name": "Get All Products",
@@ -244,32 +260,52 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/products",
+							"raw": "{{baseUrl}}/api/product",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"products"
+								"product"
 							]
 						}
 					},
 					"response": []
 				},
 				{
-					"name": "Get Product By ID",
+					"name": "Get Product By Id",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/products/1",
+							"raw": "{{baseUrl}}/api/product/1",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"products",
+								"product",
 								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Product By Name",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/product/name/Awesome%20Product",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"product",
+								"name",
+								"Awesome%20Product"
 							]
 						}
 					},
@@ -279,24 +315,24 @@
 					"name": "Create Product",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Super Widget\",\n    \"price\": 19.99\n}"
+							"raw": "{\n    \"name\": \"New Gadget\",\n    \"price\": 99.99,\n    \"stockQuantity\": 100\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/products",
+							"raw": "{{baseUrl}}/api/product",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"products"
+								"product"
 							]
 						}
 					},
@@ -306,24 +342,24 @@
 					"name": "Update Product",
 					"request": {
 						"method": "PUT",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"name\": \"Mega Widget\",\n    \"price\": 24.99\n}"
+							"raw": "{\n    \"name\": \"Updated Gadget\",\n    \"price\": 129.99,\n    \"stockQuantity\": 50\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/api/products/1",
+							"raw": "{{baseUrl}}/api/product/1",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"products",
+								"product",
 								"1"
 							]
 						}
@@ -336,13 +372,13 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/products/1",
+							"raw": "{{baseUrl}}/api/product/1",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
-								"products",
+								"product",
 								"1"
 							]
 						}
@@ -359,7 +395,27 @@
 						"type": "string"
 					}
 				]
-			}
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
 		},
 		{
 			"name": "Orders",
@@ -383,19 +439,19 @@
 					"response": []
 				},
 				{
-					"name": "Get Order By ID",
+					"name": "Get Order By Id",
 					"request": {
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/orders/YOUR_ORDER_ID",
+							"raw": "{{baseUrl}}/api/orders/your-order-id",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"orders",
-								"YOUR_ORDER_ID"
+								"your-order-id"
 							]
 						}
 					},
@@ -405,15 +461,15 @@
 					"name": "Create Order",
 					"request": {
 						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
+						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"customerId\": \"YOUR_CUSTOMER_ID\",\n    \"orderItems\": [\n        {\n            \"productId\": 1,\n            \"quantity\": 2\n        },\n        {\n            \"productId\": 2,\n            \"quantity\": 1\n        }\n    ]\n}"
+							"raw": "{\n    \"customerId\": \"your-customer-id\",\n    \"discountAmount\": 10.00,\n    \"orderItems\": [\n        {\n            \"productId\": 1,\n            \"quantity\": 2,\n            \"discountAmount\": 1.50\n        },\n        {\n            \"productId\": 2,\n            \"quantity\": 1\n        }\n    ]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/orders",
@@ -434,14 +490,123 @@
 						"method": "DELETE",
 						"header": [],
 						"url": {
-							"raw": "{{baseUrl}}/api/orders/YOUR_ORDER_ID",
+							"raw": "{{baseUrl}}/api/orders/your-order-id",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
 								"api",
 								"orders",
-								"YOUR_ORDER_ID"
+								"your-order-id"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Item to Order",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productId\": 3,\n    \"quantity\": 1,\n    \"discountAmount\": 0\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/your-order-id/items",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"your-order-id",
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Order Item",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"quantity\": 5\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/your-order-id/items/your-order-item-id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"your-order-id",
+								"items",
+								"your-order-item-id"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Order Item",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/your-order-id/items/your-order-item-id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"your-order-id",
+								"items",
+								"your-order-item-id"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update Order Status (Admin)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "\"Shipped\"",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/orders/your-order-id/status",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"your-order-id",
+								"status"
 							]
 						}
 					},
@@ -457,22 +622,27 @@
 						"type": "string"
 					}
 				]
-			}
-		}
-	],
-	"auth": {
-		"type": "noauth"
-	},
-	"variable": [
-		{
-			"key": "baseUrl",
-			"value": "https://localhost:5004",
-			"type": "string"
-		},
-		{
-			"key": "jwt_token",
-			"value": "",
-			"type": "string"
+			},
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
 		}
 	]
 }
