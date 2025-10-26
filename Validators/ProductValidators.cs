@@ -6,9 +6,9 @@ namespace WebApplication1.Validators
     /// <summary>
     /// Contains the shared validation rules for any DTO that implements IProductDto.
     /// </summary>
-    public class ProductInterfaceValidator : AbstractValidator<IProductDto>
+    public class ProductValidator : AbstractValidator<IProductDto>
     {
-        public ProductInterfaceValidator()
+        public ProductValidator()
         {
             RuleFor(x => x.Name)
                 .MinimumLength(2).WithMessage("Product name must be at least 2 characters long.")
@@ -22,11 +22,11 @@ namespace WebApplication1.Validators
     /// <summary>
     /// Validator for the CreateProductDto.
     /// </summary>
-    public class CreateProductDtoValidator : AbstractValidator<CreateProductDto>
+    public class CreateProductValidator : AbstractValidator<CreateProductDto>
     {
-        public CreateProductDtoValidator()
+        public CreateProductValidator()
         {
-            Include(new ProductInterfaceValidator());
+            Include(new ProductValidator());
 
             RuleFor(x => x.Name)
                 .NotEmpty().WithMessage("Product name is required.");
@@ -36,11 +36,11 @@ namespace WebApplication1.Validators
     /// <summary>
     /// Validator for the UpdateProductDto.
     /// </summary>
-    public class UpdateProductDtoValidator : AbstractValidator<UpdateProductDto>
+    public class UpdateProductValidator : AbstractValidator<UpdateProductDto>
     {
-        public UpdateProductDtoValidator()
+        public UpdateProductValidator()
         {
-            Include(new ProductInterfaceValidator());
+            Include(new ProductValidator());
 
             RuleFor(x => x.Name)
                 .NotEmpty().WithMessage("Product name is required for an update.");

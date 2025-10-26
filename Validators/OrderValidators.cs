@@ -45,4 +45,16 @@ namespace WebApplication1.Validators
                 .SetValidator(new CreateOrderItemDtoValidator());
         }
     }
+
+    public class UpdateOrderDtoValidator : AbstractValidator<UpdateOrderDto>
+    {
+        public UpdateOrderDtoValidator()
+        {
+            RuleFor(x => x.OrderItems)
+                .NotEmpty().WithMessage("Order must contain at least one item.");
+
+            RuleForEach(x => x.OrderItems)
+                .SetValidator(new CreateOrderItemDtoValidator());
+        }
+    }
 }
