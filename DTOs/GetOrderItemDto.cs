@@ -5,6 +5,7 @@ namespace WebApplication1.DTOs
     /// </summary>
     public class GetOrderItemDto
     {
+        public Guid OrderItemId { get; set; }
         public int ProductId { get; set; }
         public string ProductName { get; set; } = string.Empty;
         public int Quantity { get; set; }

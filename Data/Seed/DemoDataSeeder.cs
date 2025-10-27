@@ -79,9 +79,21 @@ namespace WebApplication1.Data.Seed
                     };
 
                     var numberOfItems = random.Next(1, 6); // Each order will have 1 to 5 items
+
+                    // Keep track of products already added to this specific order to avoid duplicates.
+                    var productIdsInThisOrder = new HashSet<int>();
+
                     for (int j = 0; j < numberOfItems; j++)
                     {
-                        var product = products[random.Next(products.Count)];
+                        Product product;
+                        // Keep picking a random product until we find one that isn't already in this order.
+                        do
+                        {
+                            product = products[random.Next(products.Count)];
+                        } while (productIdsInThisOrder.Contains(product.ProductId));
+
+                        productIdsInThisOrder.Add(product.ProductId);
+
                         var orderItem = new OrderItem
                         {
                             ProductId = product.ProductId,

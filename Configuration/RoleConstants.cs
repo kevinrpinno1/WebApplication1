@@ -6,5 +6,8 @@
         public const string User = "User";
         public const string OilerPlayer = "EdmontonOilers";
         public const string Trekkie = "Trekkie";
+
+        public static readonly IReadOnlyCollection<string> AllRoles = new[] { Admin, User, Trekkie, OilerPlayer };
+
     }
 }

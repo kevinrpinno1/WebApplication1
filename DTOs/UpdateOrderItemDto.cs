@@ -5,6 +5,6 @@ namespace WebApplication1.DTOs
     /// </summary>
     public class UpdateOrderItemDto
     {
-        public int Quantity { get; set; }
+        public required int Quantity { get; set; }
     }
 }

@@ -11,13 +11,9 @@ namespace WebApplication1.Models
     public class Customer
     {
         public Guid CustomerId { get; set; }
-
-        //[MinLength(2, ErrorMessage = "Name must be at least 2 characters long")]
         public string Name { get; set; } = string.Empty;
 
         public string? Address { get; set; }
-
-        //[Phone(ErrorMessage = "Invalid phone number format")]
         public string? PhoneNumber { get; set; }
 
         public virtual List<Order> Orders { get; set; } = new List<Order>();

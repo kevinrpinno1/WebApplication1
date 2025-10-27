@@ -6,14 +6,18 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.DTOs;
+using WebApplication1.Exceptions;
 using WebApplication1.Models;
 
 namespace WebApplication1.Controllers
 {
+    /// <summary>
+    /// Customer API Controller is identical really to the Product Controller, commenting is omitted for brevity here
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class CustomerController : ControllerBase
+    public class CustomerController : BaseApiController
     {
         private readonly ApplicationDbContext _context;
         private readonly IValidator<CreateCustomerDto> _createValidator;
@@ -46,35 +50,30 @@ namespace WebApplication1.Controllers
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<GetCustomerDto>> GetCustomersById(Guid id, CancellationToken ct)
         {
-            var query = _context.Customers
+            var customer = await _context.Customers
                 .AsNoTracking()
                 .Where(c => c.CustomerId == id)
-                .ProjectTo<GetCustomerDto>(_mapper.ConfigurationProvider);
-
-            var customer = await query.FirstOrDefaultAsync(ct);
+                .ProjectTo<GetCustomerDto>(_mapper.ConfigurationProvider)
+                .SingleOrDefaultAsync(ct);
 
             if (customer == null)
             {
-                return NotFound();
+                throw new EntityNotFoundException($"Customer with ID {id} not found.");
             }
 
             return Ok(customer);
         }
 
         // GET api/customer/{name}
-        [HttpGet("name/{name}")]
-        public async Task<ActionResult<GetCustomerDto>> GetCustomerByName(string name, CancellationToken ct)
+        [HttpGet("{name}")]
+        public async Task<ActionResult<IEnumerable<GetCustomerDto>>> GetCustomerByName(string name, CancellationToken ct)
         {
-            var query = _context.Customers
+            var customer = await _context.Customers
                 .AsNoTracking()
-                .Where(c => c.Name.ToLower() == name.ToLower())
-                .ProjectTo<GetCustomerDto>(_mapper.ConfigurationProvider);
+                .Where(c => c.Name.ToUpper() == name.ToUpper())
+                .ProjectTo<GetCustomerDto>(_mapper.ConfigurationProvider)
+                .ToListAsync(ct);
 
-            var customer = await query.FirstOrDefaultAsync(ct);
-            if (customer == null)
-            {
-                return NotFound();
-            }
             return Ok(customer);
         }
 
@@ -83,10 +82,7 @@ namespace WebApplication1.Controllers
         public async Task<ActionResult<GetCustomerDto>> CreateCustomer([FromBody] CreateCustomerDto dto, CancellationToken ct)
         {
             var validationResult = await _createValidator.ValidateAsync(dto, ct);
-            if (!validationResult.IsValid)
-            {
-                return BadRequest(validationResult.Errors);
-            }
+            HandleValidationFailure(validationResult);
 
             var customer = _mapper.Map<Customer>(dto);
             _context.Customers.Add(customer);
@@ -102,15 +98,12 @@ namespace WebApplication1.Controllers
         public async Task<IActionResult> UpdateCustomer(Guid id, [FromBody] UpdateCustomerDto dto, CancellationToken ct)
         {
             var validationResult = await _updateValidator.ValidateAsync(dto, ct);
-            if(!validationResult.IsValid)
-            {
-                return BadRequest(validationResult.Errors);
-            }
+            HandleValidationFailure(validationResult);
 
             var customer = await _context.Customers.FindAsync(new object[] { id }, ct);
 
             if(customer == null)
-                return NotFound();
+                throw new EntityNotFoundException($"Customer with ID {id} not found.");
 
             _mapper.Map(dto, customer);
             await _context.SaveChangesAsync(ct);
@@ -123,10 +116,12 @@ namespace WebApplication1.Controllers
         public async Task<IActionResult> DeleteCustomer(Guid id, CancellationToken ct)
         {
             var customer = await _context.Customers.FindAsync(new object[] { id }, ct);
+
             if (customer == null)
             {
-                return NotFound();
+                throw new EntityNotFoundException($"Customer with ID {id} not found.");
             }
+
             _context.Customers.Remove(customer);
             await _context.SaveChangesAsync(ct);
 

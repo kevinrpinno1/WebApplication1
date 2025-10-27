@@ -6,14 +6,18 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApplication1.DTOs;
+using WebApplication1.Exceptions;
 using WebApplication1.Models;
 
 namespace WebApplication1.Controllers
 {
+    // Typically I would separate business logic into services to keep controllers thin, and this is done with OrdersController and OrderService
+    // However, the overall logic isn't too complex for Products and Customers so keeping it all in the controller for simplicity. 
+
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class ProductController : ControllerBase
+    public class ProductController : BaseApiController
     {
         private readonly ApplicationDbContext _context;
         private readonly IValidator<CreateProductDto> _createValidator;
@@ -32,11 +36,13 @@ namespace WebApplication1.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GetProductDto>>> GetProducts(CancellationToken ct)
         {
-            var query = _context.Products
+            // Retrieve all products from the database and project them to GetProductDto
+            // as no tracking used since only doing a read operation
+            // put to list async to execute the query
+            var products = await _context.Products
                 .AsNoTracking()
-                .ProjectTo<GetProductDto>(_mapper.ConfigurationProvider);
-
-            var products = await query.ToListAsync(ct);
+                .ProjectTo<GetProductDto>(_mapper.ConfigurationProvider)
+                .ToListAsync(ct);
 
             return Ok(products);
         }
@@ -45,36 +51,37 @@ namespace WebApplication1.Controllers
         [HttpGet("{id:int}")]
         public async Task<ActionResult<GetProductDto>> GetProductById(int id, CancellationToken ct)
         {
-            var query = _context.Products
+            // Retrieve a single product by its ID and project it to GetProductDto
+            // where is done before first or default async to filter by id
+            // single or default async used to ensure a proper response if not found
+            var product = await _context.Products
                 .AsNoTracking()
                 .Where(p => p.ProductId == id)
-                .ProjectTo<GetProductDto>(_mapper.ConfigurationProvider);
-
-            var product = await query.FirstOrDefaultAsync(ct);
+                .ProjectTo<GetProductDto>(_mapper.ConfigurationProvider)
+                .SingleOrDefaultAsync(ct);
 
             if (product == null)
             {
-                return NotFound();
+                throw new EntityNotFoundException($"Product with ID {id} not found.");
             }
 
             return Ok(product);
         }
 
         // GET api/product/{name}
-        [HttpGet("name/{name}")]
-        public async Task<ActionResult<GetProductDto>> GetProductByName(string name, CancellationToken ct)
+        [HttpGet("{name}")]
+        public async Task<ActionResult<IEnumerable<GetProductDto>>> GetProductByName(string name, CancellationToken ct)
         {
-            var query = _context.Products
+            // same as ID but searching by name instead
+            // to upper used to make case insensitive - String.Equals returns a 500 error, cannot be translated to SQL and used with LINQ to Entities
+            // multiple products can have the same name so return a list
+            var products = await _context.Products
                 .AsNoTracking()
-                .Where(c => c.Name.ToLower() == name.ToLower())
-                .ProjectTo<GetProductDto>(_mapper.ConfigurationProvider);
+                .Where(c => c.Name.ToUpper() == name.ToUpper())
+                .ProjectTo<GetProductDto>(_mapper.ConfigurationProvider)
+                .ToListAsync(ct);
 
-            var product = await query.FirstOrDefaultAsync(ct);
-            if (product == null)
-            {
-                return NotFound();
-            }
-            return Ok(product);
+            return Ok(products);
         }
 
         // POST: api/product
@@ -82,18 +89,14 @@ namespace WebApplication1.Controllers
         public async Task<ActionResult<GetProductDto>> CreateProduct([FromBody] CreateProductDto dto, CancellationToken ct)
         {
             var validationResult = await _createValidator.ValidateAsync(dto, ct);
+            HandleValidationFailure(validationResult); // Validate the incoming DTO and handle any validation failures using the base controller method
 
-            if (!validationResult.IsValid)
-            {
-                return BadRequest(validationResult.Errors);
-            }
+            var product = _mapper.Map<Product>(dto); // Map the validated DTO to a Product entity
 
-            var product = _mapper.Map<Product>(dto);
+            _context.Products.Add(product); // Add and track the new product entity
+            await _context.SaveChangesAsync(ct); // Save changes to the database
 
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync(ct);
-
-            var resultDto = _mapper.Map<GetProductDto>(product);
+            var resultDto = _mapper.Map<GetProductDto>(product); // Map the saved product entity back to a GetProductDto for the response
 
             return CreatedAtAction(nameof(GetProductById), new { id = product.ProductId }, resultDto);
         }
@@ -102,17 +105,13 @@ namespace WebApplication1.Controllers
         public async Task<IActionResult> UpdateProduct(int id, [FromBody] UpdateProductDto dto, CancellationToken ct)
         {
             var validationResult = await _updateValidator.ValidateAsync(dto, ct);
-
-            if (!validationResult.IsValid)
-            {
-                return BadRequest(validationResult.Errors);
-            }
+            HandleValidationFailure(validationResult);
 
             var existingProduct = await _context.Products.FindAsync(new object[] { id }, ct);
 
             if (existingProduct == null)
             {
-                return NotFound();
+                throw new EntityNotFoundException($"Product with ID {id} not found.");
             }
 
             _mapper.Map(dto, existingProduct);
@@ -128,7 +127,7 @@ namespace WebApplication1.Controllers
 
             if (existingProduct == null)
             {
-                return NotFound();
+                throw new EntityNotFoundException($"Product with ID {id} not found.");
             }
 
             _context.Products.Remove(existingProduct);

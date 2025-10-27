@@ -13,6 +13,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using WebApplication1.Configuration;
 using WebApplication1.Data.Seed;
+using WebApplication1.Middleware;
 using WebApplication1.Services;
 using WebApplication1.Validators;
 
@@ -33,7 +34,9 @@ builder.Configuration.GetSection("Constants").Bind(constants);
 builder.Services.AddSingleton(constants);
 // --------------------------------------------------------------------
 
+// scoped token service for generating JWTs
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddValidatorsFromAssemblyContaining<UserDtoValidator>();
 
 // --------------------------------------------------------------------
@@ -67,6 +70,7 @@ builder.Services.AddIdentityCore<IdentityUser>(options =>
 
 // --------------------------------------------------------------------
 
+// JWT Authentication setup
 builder.Services.AddAuthentication(k=>
 {
     k.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -130,6 +134,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+// custom exception handling middleware
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+// Authentication before Authorization!!
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -159,22 +167,25 @@ if (app.Environment.IsDevelopment())
     using (var scope = app.Services.CreateScope())
     {
         var services = scope.ServiceProvider;
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
         try
         {
+            logger.LogInformation("Applying database migrations...");
             var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             await dbContext.Database.MigrateAsync();
 
+            logger.LogInformation("Seeding identity users...");
             var userManager = services.GetRequiredService<UserManager<IdentityUser>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-
             await DemoIdentityUserSeeder.SeedDemoUsersAsync(userManager, roleManager, constants);
 
+            logger.LogInformation("Seeding demo data...");
             await DemoDataSeeder.SeedDemoDataAsync(dbContext);
+            logger.LogInformation("Database seeding completed successfully.");
         }
         catch (Exception ex)
         {
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
             logger.LogError(ex, "An error occurred while migrating the database.");
         }
     }

@@ -4,6 +4,10 @@ using WebApplication1.Models;
 
 namespace WebApplication1.Profiles
 {
+    /// <summary>
+    /// AutoMapper profile for mapping between domain models and DTOs.
+    /// Helps to keep mapping configurations organized and maintainable, as well as separating mapping logic from business logic.
+    /// </summary>
     public class MappingProfile : Profile
     {
         public MappingProfile()
