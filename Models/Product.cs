@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace WebApplication1.Models
+﻿namespace WebApplication1.Models
 {
     // ProductId is an identity column as defined in the ApplicationDbContext
     public class Product

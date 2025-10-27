@@ -5,6 +5,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebApplication1.Configuration;
 using WebApplication1.DTOs;
 using WebApplication1.Exceptions;
 using WebApplication1.Models;
@@ -13,6 +14,7 @@ namespace WebApplication1.Controllers
 {
     /// <summary>
     /// Customer API Controller is identical really to the Product Controller, commenting is omitted for brevity here
+    /// except for the Delete method which has some business logic to prevent deletion of customers with orders
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
@@ -58,7 +60,7 @@ namespace WebApplication1.Controllers
 
             if (customer == null)
             {
-                throw new EntityNotFoundException($"Customer with ID {id} not found.");
+                throw new EntityNotFoundException(string.Format(LoggingMessages.ExCustomerNotFound, id));
             }
 
             return Ok(customer);
@@ -103,7 +105,7 @@ namespace WebApplication1.Controllers
             var customer = await _context.Customers.FindAsync(new object[] { id }, ct);
 
             if(customer == null)
-                throw new EntityNotFoundException($"Customer with ID {id} not found.");
+                throw new EntityNotFoundException(string.Format(LoggingMessages.ExCustomerNotFound, id));
 
             _mapper.Map(dto, customer);
             await _context.SaveChangesAsync(ct);
@@ -111,15 +113,26 @@ namespace WebApplication1.Controllers
             return NoContent();
         }
 
+        // don't want to allow deletion of customers that have orders
+        // an improvement here might be to delete customers whose orders have a completed status only
+        // and maybe only after x amount of time has passed since the order was completed - business logic would dictate this
+        // deleting would have to cascade to orders and order items as well
         // DELETE: api/customer/{id}
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteCustomer(Guid id, CancellationToken ct)
         {
-            var customer = await _context.Customers.FindAsync(new object[] { id }, ct);
+            var customer = await _context.Customers
+                .Include(c => c.Orders)
+                .FirstOrDefaultAsync(c => c.CustomerId == id, ct);
 
             if (customer == null)
             {
-                throw new EntityNotFoundException($"Customer with ID {id} not found.");
+                throw new EntityNotFoundException(string.Format(LoggingMessages.ExCustomerNotFound, id));
+            }
+
+            if (customer.Orders.Any())
+            {
+                throw new BusinessLogicException(LoggingMessages.ExCustomerHasOrders);
             }
 
             _context.Customers.Remove(customer);

@@ -5,6 +5,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebApplication1.Configuration;
 using WebApplication1.DTOs;
 using WebApplication1.Exceptions;
 using WebApplication1.Models;
@@ -42,6 +43,7 @@ namespace WebApplication1.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GetOrderDto>>> GetOrders(CancellationToken ct)
         {
+            // automapper projection to optimize query and mapping, eager loads related data as needed
             var orders = await _context.Orders
                 .AsNoTracking()
                 .ProjectTo<GetOrderDto>(_mapper.ConfigurationProvider)
@@ -54,6 +56,9 @@ namespace WebApplication1.Controllers
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<GetOrderDto>> GetOrderById(Guid id, CancellationToken ct)
         {
+            // automapper projection to optimize query and mapping, eager loads related data as needed
+            // single or default to handle not found case
+            // order items and customer info are included via automapper configuration
             var order = await _context.Orders
                 .AsNoTracking()
                 .Where(o => o.OrderId == id)
@@ -62,7 +67,7 @@ namespace WebApplication1.Controllers
 
             if (order == null)
             {
-                throw new EntityNotFoundException($"Order with ID {id} not found.");
+                throw new EntityNotFoundException(string.Format(LoggingMessages.ExOrderWithIdNotFound, id));
             }
 
             return Ok(order);
@@ -72,6 +77,7 @@ namespace WebApplication1.Controllers
         [HttpGet("{name}")]
         public async Task<ActionResult<IEnumerable<GetOrderDto>>> GetOrderByCustomerName(string name, CancellationToken ct)
         {
+            // while String.Comparison is reccomended, it does not translate to SQL in EF Core queries
             var orders = await _context.Orders
                 .AsNoTracking()
                 .Where(c => c.Customer != null && c.Customer.Name.ToUpper() == name.ToUpper())
@@ -92,7 +98,7 @@ namespace WebApplication1.Controllers
             var getOrderDto = await _context.Orders
                 .Where(o => o.OrderId == order.OrderId)
                 .ProjectTo<GetOrderDto>(_mapper.ConfigurationProvider)
-                .FirstAsync(ct);
+                .SingleAsync(ct);
 
             return CreatedAtAction(nameof(GetOrderById), new { id = getOrderDto.OrderId }, getOrderDto);
         }
@@ -118,7 +124,7 @@ namespace WebApplication1.Controllers
             var getOrderDto = await _context.Orders
                 .Where(o => o.OrderId == order.OrderId)
                 .ProjectTo<GetOrderDto>(_mapper.ConfigurationProvider)
-                .FirstAsync(ct);
+                .SingleAsync(ct);
 
             return Ok(getOrderDto);
         }

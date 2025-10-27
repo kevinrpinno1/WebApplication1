@@ -5,6 +5,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebApplication1.Configuration;
 using WebApplication1.DTOs;
 using WebApplication1.Exceptions;
 using WebApplication1.Models;
@@ -62,7 +63,7 @@ namespace WebApplication1.Controllers
 
             if (product == null)
             {
-                throw new EntityNotFoundException($"Product with ID {id} not found.");
+                throw new EntityNotFoundException(string.Format(LoggingMessages.ExProductNotFound, id));
             }
 
             return Ok(product);
@@ -111,7 +112,7 @@ namespace WebApplication1.Controllers
 
             if (existingProduct == null)
             {
-                throw new EntityNotFoundException($"Product with ID {id} not found.");
+                throw new EntityNotFoundException(string.Format(LoggingMessages.ExProductNotFound, id));
             }
 
             _mapper.Map(dto, existingProduct);
@@ -119,15 +120,24 @@ namespace WebApplication1.Controllers
             return NoContent();
         }
 
+        // delete a product by id
+        // would need to be more business logic here in a real world app to check for existing orders with this product etc.
         // DELETE: api/product/{id}
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteProduct(int id, CancellationToken ct)
         {
+            var isProductInUse = await _context.OrderItems.AnyAsync(oi => oi.ProductId == id, ct);
+
+            if (isProductInUse)
+            {
+                throw new BusinessLogicException(LoggingMessages.ExProductInUse);
+            }
+
             var existingProduct = await _context.Products.FindAsync(new object[] { id }, ct);
 
             if (existingProduct == null)
             {
-                throw new EntityNotFoundException($"Product with ID {id} not found.");
+                throw new EntityNotFoundException(string.Format(LoggingMessages.ExProductNotFound, id));
             }
 
             _context.Products.Remove(existingProduct);

@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace WebApplication1.Models
+﻿namespace WebApplication1.Models
 {
     // PK OrderItemID GUID set by Database
     // FK OrderID GUID referencing Order table

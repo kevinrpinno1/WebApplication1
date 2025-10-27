@@ -13,6 +13,8 @@ namespace WebApplication1.Controllers
         /// it groups the errors and throws a ValidationAppException.
         /// </summary>
         /// <param name="validationResult">The result from a FluentValidation validator.</param>
+        /// method is protected to allow access from derived controllers and to control scope to prevent external access
+        /// is inherited by other API controllers to centralize validation failure handling
         protected void HandleValidationFailure(ValidationResult validationResult)
         {
             if (!validationResult.IsValid)
